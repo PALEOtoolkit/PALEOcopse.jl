@@ -1,0 +1,178 @@
+########################################################
+# Monolithic COPSE model using ReactionModelBergman2004
+########################################################
+Bergman2004:
+    parameters:
+        temp_DAE:   false
+        tforcevar: global.tforce
+    domains:
+        global:
+            # scalar domain
+            
+            reactions:
+                tforce_constant:
+                    class: ReactionScalarConst
+                    parameters:
+                        constnames: ["tforce_constant"]
+                    variable_attributes:
+                        tforce_constant%initial_value: -600e6                     
+
+                force_solar:
+                    class: ReactionForce_CK_Solar
+                    variable_links:
+                        tforce: external%tforcevar
+
+                force_UDWE:
+                    class: ReactionForce_UDWEbergman2004
+                    variable_links:
+                        tforce: external%tforcevar
+
+                force_B:
+                    class: ReactionForce_Bbergman2004
+                    variable_links:
+                        tforce: external%tforcevar
+
+                force_CPlandrel:
+                    class: ReactionForce_CPlandrelbergman2004
+                    variable_links:
+                        tforce: external%tforcevar
+
+                reservoir_A:
+                    class: ReactionReservoirScalar
+                    parameters:
+                        field_data: IsotopeLinear
+                
+                    variable_links:
+                        R*: A*
+                    variable_attributes:
+                        R:norm_value:           3.193e18
+                        R:initial_value:        3.193e18
+                        R:initial_delta:        0.0  # per mil
+
+                reservoir_O:
+                    class: ReactionReservoirScalar
+                   
+                    variable_links:
+                        R*: O*
+                    variable_attributes:
+                        R:norm_value:           3.7e19
+                        R:initial_value:        3.7e19
+
+                reservoir_P:
+                    class: ReactionReservoirScalar
+                   
+                    variable_links:
+                        R*: P*
+                    variable_attributes:
+                        R:norm_value:           3.1e15
+                        R:initial_value:        3.1e15
+
+                reservoir_N:
+                    class: ReactionReservoirScalar
+                   
+                    variable_links:
+                        R*: N*
+                    variable_attributes:
+                        R:norm_value:           4.35e16
+                        R:initial_value:        4.35e16
+
+                reservoir_CAL:
+                    class: ReactionReservoirScalar
+                
+                    variable_links:
+                        R*: CAL*
+                    variable_attributes:
+                        R:norm_value:           1.397e19
+                        R:initial_value:        1.397e19
+
+                reservoir_C:
+                    class: ReactionReservoirScalar
+                    parameters:
+                        field_data: IsotopeLinear
+                   
+                    variable_links:
+                        R*: C*
+                    variable_attributes:
+                        R:norm_value:           5e21
+                        R:initial_value:        5e21
+                        R:initial_delta:        1.0 # per mil 
+
+                reservoir_G:
+                    class: ReactionReservoirScalar
+                    parameters:
+                        field_data: IsotopeLinear
+                    variable_links:
+                        R*: G*
+                    variable_attributes:
+                        R:norm_value:           1.25e21
+                        R:initial_value:        1.25e21
+                        R:initial_delta:        -26.0 # per mil
+
+                reservoir_GYP:
+                    class: ReactionReservoirScalar
+                    parameters:
+                        field_data: IsotopeLinear
+                
+                    variable_links:
+                        R*: GYP*
+                    variable_attributes:
+                        R:norm_value:           2e20
+                        R:initial_value:        2e20
+                        R:initial_delta:        20.0 # per mil
+
+                reservoir_PYR:
+                    class: ReactionReservoirScalar
+                    parameters:
+                        field_data: IsotopeLinear
+                   
+                    variable_links:
+                        R*: PYR*
+                    variable_attributes:
+                        R:norm_value:           1.8e20
+                        R:initial_value:        1.8e20
+                        R:initial_delta:        -15.0 # per mil
+
+                reservoir_S:
+                    class: ReactionReservoirScalar
+                    parameters:
+                        field_data: IsotopeLinear
+                    variable_links:
+                        R*: S*
+                    variable_attributes:
+                        R:norm_value:           4e19
+                        R:initial_value:        4e19
+                        R:initial_delta:        20.0  # per mil
+
+                temp_CK_1992:
+                    class: ReactionGlobalTemperatureCK1992
+                    parameters:
+                        temp_DAE: external%temp_DAE
+                    variable_links:
+                        pCO2atm:    pCO2atm  # stay in global Domain
+
+                model_Bergman2004:
+                    class: ReactionModelBergman2004
+
+                total_carbon:
+                    class: ReactionSum
+                    parameters:
+                        vars_to_add: [C, G, A]
+                    variable_links:
+                        sum: total_C                
+
+                total_sulphur:
+                    class: ReactionSum
+                    parameters:
+                        vars_to_add: [S, GYP, PYR]
+                    variable_links:
+                        sum: total_S                
+
+                total_redox:
+                    class: ReactionSum
+                    parameters:
+                        vars_to_add: [O, C, A, 2*S, 2*GYP]
+                        component_to_add: 1
+                    variable_links:
+                        sum: total_redox
+
+                    

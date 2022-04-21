@@ -1,0 +1,95 @@
+model1:
+    parameters:
+        CIsotope: IsotopeLinear
+    domains:
+        fluxSedCrusttoAOcean:
+            # for LIP forcing CO2 output
+            reactions:
+                target:
+                    class: ReactionFluxTarget
+                    
+                    parameters:
+                        fluxlist: ["C::CIsotope"]
+
+        global:
+            # scalar domain
+            
+            reactions:
+                force_constant:
+                    class: ReactionForceInterp
+                    parameters:
+                        force_times:   [-1e30, 1e30]
+                        force_values:  [42.0, 42.0]
+                    variable_links:
+                        F:      F_CONST
+
+                force_solar:
+                    class: ReactionForce_CK_Solar
+
+                force_UDWE:
+                    class: ReactionForce_UDWEbergman2004
+                    variable_links:
+                        DEGASS: DEGASS_bergman2004   # rename so we can compare different versions
+                        UPLIFT: UPLIFT_bergman2004
+
+                force_B:
+                    class: ReactionForce_Bbergman2004
+
+                force_CPlandrel:
+                    class: ReactionForce_CPlandrelbergman2004
+
+                force_PG:
+                    class: ReactionForce_spreadsheet
+                    parameters:
+                        forcename:  PG
+                        datafile:   royer_fDfAw.xlsx
+
+                force_haq_D:
+                    class: ReactionForce_spreadsheet
+                    parameters:
+                        forcename:  DEGASS
+                        datafile:   D_haq_inversion_2017.xlsx
+                    variable_links:
+                        DEGASS: DEGASS_haq_copsereloaded # rename so we can compare different versions
+
+                force_berner_fr:
+                    class: ReactionForce_spreadsheet
+                    parameters:
+                        forcename:  UPLIFT
+                        datafile:   berner_fr.xlsx
+                    variable_links:
+                        UPLIFT: UPLIFT_berner_fr # rename so we can compare different versions
+
+                force_calcium:
+                    class: ReactionForce_spreadsheet
+                    parameters:
+                        forcename:  CAL_NORM
+                        datafile:   Horita_Ca.xlsx
+
+                force_org_evap_area:
+                    class: ReactionForce_spreadsheet
+                    parameters:
+                        forcename:  ORGEVAP_AREA
+                        datafile:   organics_and_evaporites_area.xlsx
+
+                force_granite:
+                    class: ReactionForce_spreadsheet
+                    parameters:
+                        forcename:  GRAN
+                        datafile:   shield_area.xlsx
+                        datacolumn: 3  # 'silnorm' 
+
+                force_coal:
+                    class: ReactionForce_spreadsheet
+                    parameters:
+                        forcename:  COAL
+                        datafile:   coal_basin_frac_new.xlsx
+                        datacolumn: 3  # 'coalnorm' 
+
+                force_LIPs:
+                    class: ReactionForce_LIPs
+                    parameters:
+                        
+                    
+
+                    

@@ -1,0 +1,22 @@
+model1:
+    domains:
+        global:
+            # scalar domain
+            
+            reactions:
+                force_constant:
+                    class: ReactionForceInterp
+                    parameters:
+                        force_times:           [-1e30, 1e30]
+                        force_values:          [280e-6, 280e-6]
+                    variable_links:
+                        F:      pCO2atm
+
+                force_solar:
+                    class: ReactionForce_CK_Solar
+
+                temp_CK_1992:
+                    class: ReactionGlobalTemperatureCK1992
+                    variable_links:
+                        pCO2atm:    pCO2atm
+        

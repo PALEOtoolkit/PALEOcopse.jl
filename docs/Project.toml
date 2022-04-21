@@ -1,0 +1,15 @@
+[compat]
+Documenter = "0.27"
+DocumenterCitations = "0.2"
+Revise = "3.1"
+julia = "1.6"
+
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
+PALEOcopse = "4a6ed817-0e58-48c6-8452-9e9afc8cb508"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+
+[extras]
+CPUSummary = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
+PALEOboxes = "804b410e-d900-4b2a-9ecd-f5a06d4c1fd4"
