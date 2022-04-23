@@ -207,24 +207,7 @@ model1:
                     class: ReactionForceInterp
                     variable_links:
                         F: RHOSIL
-                        tforce: external%tforcevar
-                
-                reservoir_A:
-                    class: ReactionAtmOcean_A
-
-                    variable_attributes:
-                        A:norm_value:           3.193e18
-                        A:initial_value:        3.193e18
-                        A:initial_delta:        0.0  # per mil
-                    parameters:
-                        f_atfrac:   quadratic
-
-                reservoir_O:
-                    class: ReactionAtmOcean_O
-
-                    variable_attributes:
-                        O:norm_value:           3.7e19
-                        O:initial_value:        3.7e19        
+                        tforce: external%tforcevar   
 
                 CO2pulse:
                     class: ReactionFluxPerturb
@@ -234,7 +217,7 @@ model1:
                         perturb_totals: [0.0, 0.0]
                         perturb_deltas: [0.0, 0.0] 
                     variable_links:
-                        F: A_sms
+                        F: atmocean.A_sms
                         FApplied: CO2pulse
                         tforce: global.tforce
 
@@ -256,7 +239,7 @@ model1:
                 total_carbon:                    
                     class: ReactionSum
                     parameters:
-                        vars_to_add: [sedcrust.C, sedcrust.G, A]
+                        vars_to_add: [sedcrust.C, sedcrust.G, atmocean.A]
                     variable_links:
                         sum: total_C
 
@@ -270,10 +253,38 @@ model1:
                 total_redox:
                     class: ReactionSum
                     parameters:
-                        vars_to_add: [O, sedcrust.C, A, 2*ocean.S, 2*sedcrust.GYP]
+                        vars_to_add: [atmocean.O, sedcrust.C, atmocean.A, 2*ocean.S, 2*sedcrust.GYP]
                         component_to_add: 1 # we just want the first component (total) from isotope variables
                     variable_links:
                         sum: total_redox
+
+        atmocean:
+            reactions:
+                reservoir_A:
+                    class: ReactionAtmOcean_A
+
+                    variable_attributes:
+                        A:norm_value:           3.193e18
+                        A:initial_value:        3.193e18
+                        A:initial_delta:        0.0  # per mil
+                    parameters:
+                        f_atfrac:   quadratic
+                    variable_links:
+                        TEMP:                   global.TEMP
+                        pCO2*:                  atm.pCO2*
+                        D_atmCO2_A:             atm.D_atmCO2_A
+                        CO2_delta:              atm.CO2_delta
+                        D_oceanDIC_A:           ocean.D_oceanDIC_A
+                        DIC_delta:              ocean.DIC_delta
+
+                reservoir_O:
+                    class: ReactionAtmOcean_O
+
+                    variable_attributes:
+                        O:norm_value:           3.7e19
+                        O:initial_value:        3.7e19
+                    variable_links:
+                        pO2*:                   atm.pO2*     
 
                 transfer_AtoLand:
                     class: ReactionFluxTransfer
@@ -560,10 +571,10 @@ model1:
                 ocean_copse:
                     class: ReactionOceanCOPSE
                     variable_links:                        
-                        DIC_sms: global.A_sms                        
+                        DIC_sms: atmocean.A_sms                        
                         DIC_delta: DIC_delta # provided by CIsotopes
-                        # DIC*: global.A # dont do this !!! (overwrites DIC_delta with global.A_delta)
-                        O*: global.O*
+                        # DIC*: atmocean.A # dont do this !!! (overwrites DIC_delta with atmocean.A_delta)
+                        O*: atmocean.O*
                         CAL_norm: global.CAL_NORM   # [Ca] from forcing
                     parameters:
                         newp0:                  225.956

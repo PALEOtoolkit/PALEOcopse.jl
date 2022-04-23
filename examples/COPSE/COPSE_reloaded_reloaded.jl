@@ -24,7 +24,8 @@ global_logger(ConsoleLogger(stderr,Logging.Info))
 
 
 # Baseline Phanerozoic configuration
-comparemodel = CompareOutput.copse_output_load("reloaded","reloaded_baseline")
+# comparemodel = CompareOutput.copse_output_load("reloaded","reloaded_baseline")
+comparemodel = nothing
 run = copse_reloaded_reloaded_expts(
     "reloaded",
     ["baseline"],
@@ -108,9 +109,14 @@ end
 # Overlay comparison data (data compilations available on request, not publically distributable)
 #################################################################################################
 
-# include("compare_output_plots.jl")
-# copse_reloaded_comparedata([run.output], include_Sr=true, pager=pager)
+if false
+    include("compare_output_plots.jl")
+    copse_reloaded_comparedata([run.output], include_Sr=true, pager=pager)
+else
+    copse_reloaded_reloaded_plot_summary([run.output], pager=pager)
+end
 
+pager(:newpage) # flush output
 
 @info "End $(@__FILE__)"
 
