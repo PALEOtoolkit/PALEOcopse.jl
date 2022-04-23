@@ -23,12 +23,6 @@ import Pkg
 Pkg.activate("../")
 ```
 
-### Setup environment the first time the downloaded repository is used 
-```julia
-Pkg.dev("../../")   # only needed on first use: setup to use the local version of PALEOcopse packages to allow local modifications
-Pkg.instantiate()   # only needed on first use: download packages
-```
-
 ## To run the COPSE Reloaded baseline example for the Phanerozoic:
    
     julia> include("COPSE_reloaded_reloaded.jl")

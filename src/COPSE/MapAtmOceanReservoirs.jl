@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    MapAtmOceanReservoirs
-
-Map Earth surface reservoirs representing combination of atmosphere and ocean
-Use in combination with scalar reservoirs in global domain
-Calculates partitioning into atmosphere and ocean
-"""
 module MapAtmOceanReservoirs
 
 import PALEOboxes as PB
@@ -13,7 +6,14 @@ import PALEOboxes as PB
 """
     ReactionAtmOcean_O
 
-Map atmosphere + ocean O reservoir to provide atmospheric pO2
+Combined atmosphere + ocean scalar O (oxygen) reservoir for use with COPSE model.
+
+Provides state variable `O` (O2 in moles), state variable  time derivative `O_sms` (mol yr-1) and 
+`O_norm` (`O` normalized by `O:norm_value` attribute, which should be set in .yaml config
+file to present-day atmospheric value).
+
+Also calculates additional quantities `pO2atm` (partial pressure in bar), and `pO2PAL` (equal to `O_norm`), which should usually
+be relinked to the `atm` Domain in the config file. Assumes ocean oxygen is a neglible fraction of the total.
 """
 Base.@kwdef mutable struct ReactionAtmOcean_O <:  PB.AbstractReaction
     base::PB.ReactionBase
@@ -76,8 +76,22 @@ end
 """
     ReactionAtmOcean_A
 
-Atmosphere-ocean inorganic carbon, with calculation of atm-ocean fraction `phi` and 
-atmospheric pCO2
+Atmosphere-ocean inorganic carbon `A` reservoir, for use with the COPSE model.
+
+Provides state variable `A` (total C in atmospheric CO2 and ocean DIC, in moles), 
+state variable  time derivative `A_sms` (mol yr-1) and  `A_norm` (`A` normalized by `A:norm_value` attribute,
+which should be set in .yaml config file to the pre-industrial value of 3.193e18 mol).
+
+Also calculates partitioning into atmosphere and ocean (atm-ocean fraction `phi`) and 
+atmospheric `pCO2atm` (partial pressure in bar), and `pCO2PAL`, which should usually
+be relinked to the `atm` Domain in the config file.
+
+The calculation of `phi` atm-ocean fraction is set by Parameter `f_atfrac`:
+- `original`:  fixed `phi`, as used in the original COPSE model [Bergman2004](@cite).
+- `quadratic`: `phi` proportional to `A`, approximating the behaviour of the carbonate system assuming carbonate saturation
+  hence `[CO3--]` carbonate ion concentration is approximately constant.
+
+If Parameter `delta_atm_ocean == true`, also calculates atmosphere CO2 and ocean DIC isotopic fractionation.
 """
 Base.@kwdef mutable struct ReactionAtmOcean_A{P} <:  PB.AbstractReaction
     base::PB.ReactionBase

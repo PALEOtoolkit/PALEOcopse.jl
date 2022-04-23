@@ -11,6 +11,9 @@ import PALEOcopse
 
 COPSE Bergman(2004), COPSE Reloaded Lenton etal (2018) metamorphic and volcanic "degassing" of
 sedimentary carbon and sulphur reservoirs.
+
+Fluxes are added to flux couplers:
+- `fluxSedCrusttoAOcean`:  carbon and sulphur "degassing" fluxes
 """
 Base.@kwdef mutable struct ReactionSedCrustCOPSE{P} <: PB.AbstractReaction
     base::PB.ReactionBase

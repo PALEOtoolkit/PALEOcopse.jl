@@ -1,22 +1,41 @@
 # PALEOcopse.jl documentation
 
-The PALEOcopse.jl repository provides:
+## Installation and running the model
 
-- A set of Reactions for COPSE components (land, ocean, ...). These can be made available for use by other models by adding the PALEOcopse package, eg
+### Installation
 
-    julia> ] add PALEOcopse
-    julia> import PALEOcopse
+NB: requires Julia 1.6 or later.  To check the Julia version:
 
-- Examples for the standalone COPSE reloaded model.  To use these, clone the github repository to a local folder,
+    julia> versioninfo()
 
-    > git clone https://github.com/PALEOtoolkit/PALEOcopse.jl.git PALEOcopse
-then activate the `PALEOcopse\examples` Julia environment, setting the source for the `PALEOcopse` package as the downloaded PALEOcopse repository:
+Clone this github repository to local directory `PALEOcopse`: from a linux bash prompt or a Windows terminal,
 
-    julia> cd("PALEOcopse/examples/COPSE")
+    $ git clone https://github.com/PALEOtoolkit/PALEOcopse.jl.git PALEOcopse
+
+Start julia and navigate to the `PALEOcopse/examples` folder, and run `setup.jl` to configure the `PALEOcopse/examples`
+Julia environment to use the local (downloaded) version of the PALEOcopse package:
+
+    julia> cd("PALEOcopse/examples")
+    julia> include("setup.jl") # use the local version of PALEOcopse packages to allow local modifications
+   
+### Running the model
+Start julia and navigate to the `PALEOcopse` folder, then:
+
+    julia> cd("examples/COPSE")
     julia> import Pkg
     julia> Pkg.activate("..") # use the PALEOcopse/examples environment
-    julia> Pkg.dev("../..")   # use the local version of PALEOcopse packages to allow local modifications
-    julia> Pkg.instantiate() 
 
-PALEO documentation follows the recommendations from <https://documentation.divio.com/>
+    julia> include("COPSE_reloaded_reloaded.jl")
+
+## Evaluation data
+
+Datasets are not part of the public release but are available on request from the authors.
+
+## Using PALEOcopse Reactions from other models
+
+The PALEO Reactions comprising the COPSE model are available when the registered PALEOcopse package is loaded (without downloading the repository), ie
+
+    julia> Pkg.add("PALEOcopse")
+    julia> import PALEOcopse
+
 
