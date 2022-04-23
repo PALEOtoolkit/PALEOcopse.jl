@@ -21,11 +21,12 @@ global_logger(ConsoleLogger(stderr,Logging.Info))
 
 @info "Start $(@__FILE__)"
 
-# comparemodel = CompareOutput.copse_output_load("bergman2004","")
 
 
 # Baseline Phanerozoic configuration
-comparemodel = CompareOutput.copse_output_load("reloaded","original_baseline")
+# comparemodel = CompareOutput.copse_output_load("bergman2004","")
+# comparemodel = CompareOutput.copse_output_load("reloaded","original_baseline")
+comparemodel = nothing
 run = copse_reloaded_bergman2004_expts(
     "bergman2004",
     ["baseline"],
@@ -116,8 +117,12 @@ end
 # Overlay comparison data (data compilations available on request, not publically distributable)
 #################################################################################################
 
-# include("compare_data.jl")
-# copse_reloaded_comparedata([run.output], include_Sr=false, pager=pager)
+if false
+    # include("compare_data.jl")
+    # copse_reloaded_comparedata([run.output], include_Sr=false, pager=pager)
+else
+    copse_reloaded_bergman2004_plot_summary([run.output], pager=pager)
+end
 
 
 @info "End $(@__FILE__)"

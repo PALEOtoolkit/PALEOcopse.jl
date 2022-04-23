@@ -27,8 +27,8 @@ function PB.register_methods!(rj::ReactionAtmOcean_O)
         PB.VarStateExplicitScalar(  "O",            "mol",      "atm-ocean oxygen"),
         PB.VarDerivScalar(          "O_sms",        "mol yr-1", "atm-ocean oxygen source-sinks"),
         PB.VarPropScalar(           "O_norm",       "",         "atm-ocean normalized"),
-        PB.VarPropScalar(           "atm.pO2atm",   "atm",      "atmospheric pO2"),
-        PB.VarPropScalar(           "atm.pO2PAL",   "",         "atmospheric pO2 normalized to present day"),
+        PB.VarPropScalar(           "pO2atm",   "atm",      "atmospheric pO2"),
+        PB.VarPropScalar(           "pO2PAL",   "",         "atmospheric pO2 normalized to present day"),
     ]
 
     # callback function to store Variable norm during setup
@@ -119,8 +119,8 @@ function PB.register_methods!(rj::ReactionAtmOcean_A)
         PB.VarDerivScalar(        "A_sms",      "mol yr-1", "atm-ocean inorganic carbon (CO2 + DIC) source-sinks",
             attributes=(:field_data=>CIsotopeType,)),
         PB.VarPropScalar(         "A_norm",     "",         "atm-ocean inorganic carbon (CO2 + DIC) normalized to present day"),
-        PB.VarPropScalar(         "atm.pCO2atm","atm",      "atmospheric pCO2"),
-        PB.VarPropScalar(         "atm.pCO2PAL","",         "atmospheric pCO2 normalized to present day"),
+        PB.VarPropScalar(         "pCO2atm","atm",      "atmospheric pCO2"),
+        PB.VarPropScalar(         "pCO2PAL","",         "atmospheric pCO2 normalized to present day"),
         PB.VarPropScalar(         "phi",        "",         "atmospheric pCO2 fraction"),
     ]
 
@@ -153,11 +153,11 @@ function PB.register_methods!(rj::ReactionAtmOcean_A)
         if rj.pars.delta_atm_ocean.v
             push!(vars_isotope,
                 PB.VarDepScalar("phi", "",  "atmospheric pCO2 fraction"),
-                PB.VarPropScalar("atm.D_atmCO2_A", "per mil", "d13C fractionation between atmospheric CO2 and global DIC+CO2"),
-                PB.VarPropScalar("atm.CO2_delta", "per mil",  "atmospheric pCO2 delta 13C"),
+                PB.VarPropScalar("D_atmCO2_A", "per mil", "d13C fractionation between atmospheric CO2 and global DIC+CO2"),
+                PB.VarPropScalar("CO2_delta", "per mil",  "atmospheric pCO2 delta 13C"),
                 
-                PB.VarPropScalar("ocean.D_oceanDIC_A", "per mil", "d13C fractionation between marine DIC and global DIC+CO2"),
-                PB.VarPropScalar("ocean.DIC_delta", "per mil",  "marine DIC delta 13C"),
+                PB.VarPropScalar("D_oceanDIC_A", "per mil", "d13C fractionation between marine DIC and global DIC+CO2"),
+                PB.VarPropScalar("DIC_delta", "per mil",  "marine DIC delta 13C"),
             )
         end
         if !rj.pars.fix_cisotopefrac_T.v

@@ -124,6 +124,30 @@ function copse_reloaded_reloaded_expts(
     return run
 end
 
+function copse_reloaded_reloaded_plot_summary(
+    outputs; 
+    pager=PALEOmodel.DefaultPlotPager(),
+    extrakwargs::NamedTuple=NamedTuple()
+)
+
+    pager(
+        plot(title="O2", 100*PALEOmodel.get_array.(outputs, "land.mrO2"); ylabel="O_2 (%)", extrakwargs...),
+
+        plot(title="pCO2", 1e6*PALEOmodel.get_array.(outputs, "atm.pCO2atm"); ylabel="pCO2 (ppm)", extrakwargs...),
+
+        # ocean volume in litres = PB.Constants.k18_oceanmass/1.027 = 1.397e21 / 1.027 = 1.360e21
+        # [SO4] mM = 1e3 * total SO4 (mol) / ocean vol (litres) = 7.351e-19 * SO4 (mol)
+        plot(title="[SO4]", 7.351e-19*PALEOmodel.get_array.(outputs, "ocean.S"); ylabel="[SO4] mM", extrakwargs...),
+
+        plot(title="Carbon isotopes",  outputs, "ocean.mccb_delta"; ylabel="delta 13C (‰)", extrakwargs...),
+           
+        plot(title="d34S SO4", outputs, "ocean.S_delta"; ylabel="d34S (‰)", extrakwargs...),
+  
+        plot(title="d87/d86 Sr", outputs, ["ocean.Sr_delta"]; ylabel="d87/d86 Sr", extrakwargs...),
+    
+        :newpage,
+    )
+end
 
 function copse_reloaded_reloaded_plot(
     output; 
@@ -158,7 +182,7 @@ function copse_reloaded_reloaded_plot(
         plot(title="pCO2",                  output, "atm.".*["pCO2PAL"],  ylabel="pCO2 (PAL)"; extrakwargs...),
         plot(title="Temperature",           output, ["global.TEMP"],  ylabel="T (K)"; extrakwargs...),
         plot(title="Oxygen",                output, ["atm.pO2PAL", "ocean.ANOX"]; extrakwargs...),
-        plot(title="Carbon",                output, ["global.total_C", "sedcrust.C", "sedcrust.G", "global.A"], ylabel="mol C"; extrakwargs...),
+        plot(title="Carbon",                output, ["global.total_C", "sedcrust.C", "sedcrust.G", "atmocean.A"], ylabel="mol C"; extrakwargs...),
         plot(title="Sulphur",               output, ["global.total_S", "ocean.S", "sedcrust.PYR", "sedcrust.GYP"], ylabel="mol S"; extrakwargs...),
         plot(title="Silicate weathering",   output, ["land.silw", "land.granw", "land.basw", "oceanfloor.sfw_total"], ylabel="flux (mol/yr)"; extrakwargs...),
         plot(title="Phosphorus weathering", output, ["land.phosw", "land.phosw_c", "land.phosw_o", "land.phosw_s"], ylabel="flux (mol P/yr)"; extrakwargs...),
@@ -167,7 +191,7 @@ function copse_reloaded_reloaded_plot(
         plot(title="S burial",              output, ["fluxOceanBurial.flux_total_GYP", "fluxOceanBurial.flux_total_PYR"], ylabel="S burial (mol S yr-1)"; extrakwargs...), 
         plot(title="Land biota",            output, ["land.V_T", "land.V_o2", "land.V_co2", "land.V_npp", "land.firef", "land.VEG", "global.COAL", "atm.pO2PAL"]; extrakwargs...),
         plot(title="Sulphur isotopes",      output, ["ocean.S_delta", "sedcrust.PYR_delta", "sedcrust.GYP_delta"], ylabel="delta 34S (per mil)"; extrakwargs...),
-        plot(title="Carbon isotopes",       output, ["global.A_delta", "ocean.DIC_delta", "atm.CO2_delta", "ocean.mccb_delta", "sedcrust.C_delta"], ylabel="delta 13C (per mil)"; extrakwargs...),
+        plot(title="Carbon isotopes",       output, ["atmocean.A_delta", "ocean.DIC_delta", "atm.CO2_delta", "ocean.mccb_delta", "sedcrust.C_delta"], ylabel="delta 13C (per mil)"; extrakwargs...),
         plot(title="Sr sed reservoir",      output, ["sedcrust.Sr_sed"], ylabel="Sr_sed (mol)"; extrakwargs...),    
         plot(title="Sr ocean reservoir",    output, ["ocean.Sr"], ylabel="Sr (mol)"; extrakwargs...), 
         plot(title="Sr fluxes",             output, ["fluxRtoOcean.flux_Sr", "fluxOceanBurial.flux_total_Sr", "fluxOceanfloor.soluteflux_Sr" ], ylabel="Sr flux (mol yr-1)"; extrakwargs...),
