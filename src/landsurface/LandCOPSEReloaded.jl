@@ -9,9 +9,9 @@ import Infiltrator # Julia debugger
 """
     ReactionLandBiota
 
-COPSE Reloaded(2018) land biota. Calculates `VEG`, mass of terrestrial biosphere.
+COPSE Reloaded(2018) land biota. Calculates `VEG`, representing land plant coverage and biomass.
 
-In a scalar (0D) Domain, this functions as in COPSE to calculate global mean rates.
+In a scalar (0D) Domain, this functions as in COPSE to calculate a global mean.
 
 In a spatially-resolved Domain, this calculates local properties using local TEMP.
 """
@@ -177,7 +177,7 @@ Calculates weathering rates as a function of temperature, pCO2, pO2 and biospher
 In a scalar (0D) Domain, this functions as in COPSE to calculate global mean rates.
 
 In a spatially-resolved Domain, this calculates local rates (use 'f_runoff' parameter to choose
-an appropriate hydrological parameterisation from supplied GCM runoff).
+an appropriate hydrological parameterisation based on a supplied spatially-varying `runoff (kg m-2 s-1)`).
 """
 Base.@kwdef mutable struct ReactionLandWeatheringRates{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -385,6 +385,11 @@ end
 
 COPSE Reloaded(2018) weathering fluxes.
 Calculates and applies global weathering fluxes and land burial given weathering rates and land areas.
+
+Fluxes are added to flux couplers:
+- `fluxAtoLand`:  CO2 and O2 exchange with atmosphere
+- `fluxRtoOcean`: riverine fluxes
+- `fluxLandtoSedCrust`: sedimentary reservoir weathering and land organic carbon burial
 """
 Base.@kwdef mutable struct ReactionLandWeatheringFluxes{P} <: PB.AbstractReaction
     base::PB.ReactionBase

@@ -14,7 +14,7 @@ import PALEOcopse
 """
     ReactionForce_CK_Solar
 
-`SOLAR` forcing.
+`SOLAR` forcing (incident solar flux at Earth, W m^-2)
 """
 Base.@kwdef mutable struct ReactionForce_CK_Solar <:  PB.AbstractReaction
     base::PB.ReactionBase

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""Carbon isotope fractionation from Bergman (2004) COPSE biogeochemical model
-"""
+
 module CIsotopes
 
 import PALEOboxes as PB
@@ -8,7 +6,10 @@ import PALEOboxes as PB
 """
     ReactionCIsotopes
 
-Carbon isotope fractionation.
+Carbon isotope fractionation from Bergman (2004) COPSE biogeochemical model. 
+
+Calculates global mean isotope fractionation for marine carbonate burial and land and ocean organic carbon burial
+from global mean `TEMP`, `pCO2PAL` and `pO2PAL`.
 """
 Base.@kwdef mutable struct ReactionCIsotopes{P} <:  PB.AbstractReaction
     base::PB.ReactionBase
@@ -110,7 +111,7 @@ function do_CIsotopes(
     return nothing
 end
 
-"Install create_reactionXXX factories when module imported"
+# Install create_reactionXXX factories when module imported
 function __init__()
     PB.add_reaction_factory(ReactionCIsotopes)
     return nothing
