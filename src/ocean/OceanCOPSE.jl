@@ -6,7 +6,14 @@ import PALEOboxes as PB
 
 import PALEOcopse
 
-"COPSE Bergman(2004), COPSE Reloaded Lenton etal (2018) ocean"
+"""
+    ReactionOceanCOPSE
+
+COPSE Bergman(2004), COPSE Reloaded Lenton etal (2018) 0D ocean
+
+Fluxes are added to flux couplers:
+- `fluxOceanBurial`: ocean burial fluxes
+"""
 Base.@kwdef mutable struct ReactionOceanCOPSE{P} <: PB.AbstractReaction
     base::PB.ReactionBase
 

@@ -11,7 +11,9 @@ import PALEOcopse
 """
     ReactionModelBergman2004
 
-COPSE Bergman(2004) model
+Monolithic COPSE Bergman(2004) model, providing all biogeochemistry as a single Reaction in a single `global` Domain.
+
+Requires reservoirs, forcings, and global temperature (ReactionGlobalTemperatureCK1992) to form a complete model.
 """
 Base.@kwdef mutable struct ReactionModelBergman2004{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -264,7 +266,7 @@ function do_stateandeqb(m::PB.ReactionMethod, (S, D), cellrange::PB.AbstractCell
     # Add user-friendly atmospheric concentrations etc
     D.pO2PAL[] = D.O_norm[]
     D.pCO2PAL[] = D.A_norm[]  # pre-industrial = 1
-    D.pCO2atm[] = D.pCO2PAL[]*PB.Constants.pCO2atm0   # pre-industrial = 280e-6
+    D.pCO2atm[] = D.pCO2PAL[]*PB.Constants.k_preindCO2atm   # pre-industrial = 280e-6
 
 
     # Carbon isotope fractionation (relative to total CO2 (A reservoir)

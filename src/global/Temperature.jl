@@ -150,14 +150,14 @@ end
 """
     ReactionGlobalTemperatureBerner
     
-Global temperature calculation from pCO2, implicit solar luminosity (from forcing time tforce).
+Global temperature calculation from pCO2, with implicit change in solar luminosity (calculated from forcing time tforce).
 """
 Base.@kwdef mutable struct ReactionGlobalTemperatureBerner{P} <: PB.AbstractReaction
     base::PB.ReactionBase
 
     pars::P = PB.ParametersTuple(
-        PB.ParDouble("k_c",   4.328,  description="climate sensitivity to CO2"),
-        PB.ParDouble("k_l",   7.4,    description="rate of change of solar luminosity"),
+        PB.ParDouble("k_c",   4.328, units="K", description="climate sensitivity to CO2"),
+        PB.ParDouble("k_l",   7.4,  units="K (570e6 yr)-1",  description="rate of change of solar luminosity"),
     )
 
 end

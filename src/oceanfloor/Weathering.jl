@@ -8,6 +8,13 @@ import PALEOboxes as PB
     ReactionSeafloorWeathering
 
 COPSE Reloaded (Lenton etal 2018) seafloor weathering (basalt carbonation).
+
+In a spatially resolved oceanfloor Domain, the total flux is calculated in the same way as for the 0D COPSE model,
+and is then distributed over a range of oceanfloor cells according the Paramter `sfw_distribution_method`.
+
+Fluxes are added to flux couplers:
+- `fluxOceanfloor`: ocean solute fluxes
+- `fluxOceanBurial`: carbonate burial flux
 """
 Base.@kwdef mutable struct ReactionSeafloorWeathering{P} <: PB.AbstractReaction
     base::PB.ReactionBase

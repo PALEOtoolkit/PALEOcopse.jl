@@ -13,7 +13,9 @@ makedocs(bib, sitename="PALEOcopse Documentation",
         "Examples and Tutorials" => [
             "ExampleCOPSEreloaded.md",
         ],
-        # no Design docs yet
+        "Design" => [
+            "COPSE_Domains.md",
+        ],
         # no HOWTO docs yes
         "Reference" => [
             "PALEOcopse.md",
