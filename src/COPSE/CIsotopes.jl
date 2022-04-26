@@ -111,10 +111,4 @@ function do_CIsotopes(
     return nothing
 end
 
-# Install create_reactionXXX factories when module imported
-function __init__()
-    PB.add_reaction_factory(ReactionCIsotopes)
-    return nothing
-end
-
 end

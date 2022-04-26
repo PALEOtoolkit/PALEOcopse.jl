@@ -222,11 +222,5 @@ function set_distributionfromdepths(
     return nothing
 end
 
-"Install create_reactionXXX factories when module imported"
-function __init__()
-   
-    PB.add_reaction_factory(ReactionSeafloorWeathering)
-    return nothing
-end
 
 end # module

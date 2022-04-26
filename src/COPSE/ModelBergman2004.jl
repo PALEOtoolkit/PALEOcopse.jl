@@ -502,14 +502,6 @@ function do_updatestate(m::PB.ReactionMethod, (S, D), cellrange::PB.AbstractCell
 end
 
 
-
-
-"Install create_reactionXXX factories when module imported"
-function __init__()
-    PB.add_reaction_factory(ReactionModelBergman2004)
-    return nothing
-end
-
 """
     copse_landbiota_bergman2004(pars, S, D, TEMP)
 

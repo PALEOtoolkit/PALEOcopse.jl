@@ -427,14 +427,4 @@ function set_Sr_fluxes_steady_state!(
 end
 
 
-"Install create_reactionXXX factories when module imported"
-function __init__()    
-    PB.add_reaction_factory(ReactionSrMantleCrust)
-    PB.add_reaction_factory(ReactionSrSed)
-    PB.add_reaction_factory(ReactionSrLand)
-    PB.add_reaction_factory(ReactionSrOceanfloor)
-
-    return nothing
-end
-
 end
