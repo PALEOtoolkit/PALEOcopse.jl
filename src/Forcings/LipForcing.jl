@@ -325,12 +325,5 @@ function do_force_LIPs(m::PB.ReactionMethod, (vars, ), cellrange::PB.AbstractCel
 end
 
 
-"Install create_reactionXXX factories when module imported"
-function __init__()
-    PB.add_reaction_factory(ReactionForce_LIPs)
- 
-    return nothing
-end
-
 
 end # module

@@ -193,12 +193,4 @@ function do_GlobalTemperatureBerner(m::PB.ReactionMethod, (vars, ), cellrange::P
     return nothing
 end
 
-
-"Install create_reactionXXX factories when module imported"
-function __init__()
-    PB.add_reaction_factory(ReactionGlobalTemperatureCK1992)
-    PB.add_reaction_factory(ReactionGlobalTemperatureBerner)
-    return nothing
-end
-
 end # module

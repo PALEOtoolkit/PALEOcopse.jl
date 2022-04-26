@@ -360,14 +360,6 @@ function do_react(m::PB.ReactionMethod,  (fluxOceanBurial, S, D), cellrange::PB.
     return nothing
 end
 
-
-"Install create_reactionXXX factories when module imported"
-function __init__()
-    PB.add_reaction_factory(ReactionOceanCOPSE)
-    return nothing
-end
-
-
 function copse_marinebiota(pars, tmodel, S, D )
     """COPSE_MARINEBIOTA COPSE marine ecosystem model
     """

@@ -302,16 +302,4 @@ function do_force_spreadsheet(m::PB.ReactionMethod, (var_tforce, var_FORCE), cel
 end
 
 
-
-"Install create_reactionXXX factories when module imported"
-function __init__()
-    PB.add_reaction_factory(ReactionForce_CK_Solar)
-    PB.add_reaction_factory(ReactionForce_UDWEbergman2004)
-    PB.add_reaction_factory(ReactionForce_Bbergman2004)
-    PB.add_reaction_factory(ReactionForce_CPlandrelbergman2004)
-    PB.add_reaction_factory(ReactionForce_spreadsheet)   
-    return nothing
-end
-
-
 end # module

@@ -319,14 +319,6 @@ end
 
 
 
-
-
-"Install create_reactionXXX factories when module imported"
-function __init__()
-    PB.add_reaction_factory(ReactionLandBergman2004)
-    return nothing
-end
-
 function copse_landbiota_bergman2004(pars, D)
     """COPSE_LANDBIOTA COPSE OCT dynamic land vegetation model
     """

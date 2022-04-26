@@ -216,11 +216,4 @@ function do_AtmOcean_A_isotope(
 
 end
 
-"Install create_reactionXXX factories when module imported"
-function __init__()
-    PB.add_reaction_factory(ReactionAtmOcean_O)
-    PB.add_reaction_factory(ReactionAtmOcean_A)
-    return nothing
-end
-
 end

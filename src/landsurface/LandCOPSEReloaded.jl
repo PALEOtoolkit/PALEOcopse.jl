@@ -872,14 +872,6 @@ function set_steady_state(
     end          
 end
 
-"Install create_reactionXXX factories when module imported"
-function __init__()
-    PB.add_reaction_factory(ReactionLandBiota)
-    PB.add_reaction_factory(ReactionLandWeatheringRates)
-    PB.add_reaction_factory(ReactionLandWeatheringFluxes)
-    return nothing
-end
-
 
 
 end # module
