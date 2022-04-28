@@ -3,6 +3,7 @@ module LandCOPSEReloaded
 
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
 
 import Infiltrator # Julia debugger
 
@@ -14,6 +15,12 @@ COPSE Reloaded(2018) land biota. Calculates `VEG`, representing land plant cover
 In a scalar (0D) Domain, this functions as in COPSE to calculate a global mean.
 
 In a spatially-resolved Domain, this calculates local properties using local TEMP.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables for default Parameters
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionLandBiota{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -178,6 +185,12 @@ In a scalar (0D) Domain, this functions as in COPSE to calculate global mean rat
 
 In a spatially-resolved Domain, this calculates local rates (use 'f_runoff' parameter to choose
 an appropriate hydrological parameterisation based on a supplied spatially-varying `runoff (kg m-2 s-1)`).
+
+# Parameters
+$(PARS)
+
+# Methods and Variables for default Parameters
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionLandWeatheringRates{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -390,6 +403,12 @@ Fluxes are added to flux couplers:
 - `fluxAtoLand`:  CO2 and O2 exchange with atmosphere
 - `fluxRtoOcean`: riverine fluxes
 - `fluxLandtoSedCrust`: sedimentary reservoir weathering and land organic carbon burial
+
+# Parameters
+$(PARS)
+
+# Methods and Variables for default Parameters
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionLandWeatheringFluxes{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -561,22 +580,28 @@ function PB.register_methods!(rj::ReactionLandWeatheringFluxes)
         ]
     )
 
+    # isotopes with defaults
+    isotope_data = merge(
+        Dict("CIsotope"=>PB.ScalarData, "SIsotope"=>PB.ScalarData),
+        rj.external_parameters
+    )
+
     # Add flux couplers
     fluxAtoLand = PB.Fluxes.FluxContribScalar(
         "fluxAtoLand.flux_", ["CO2::CIsotope", "O2"],
-        isotope_data=rj.external_parameters)
+        isotope_data=isotope_data)
 
     fluxRtoOcean = PB.Fluxes.FluxContribScalar(
         "fluxRtoOcean.flux_", ["DIC::CIsotope", "TAlk", "Ca", "P", "SO4::SIsotope"],
-        isotope_data=rj.external_parameters)
+        isotope_data=isotope_data)
 
     fluxLandtoSedCrust = PB.Fluxes.FluxContribScalar(
         "fluxLandtoSedCrust.flux_", ["Ccarb::CIsotope", "Corg::CIsotope", "GYP::SIsotope", "PYR::SIsotope"],
-        isotope_data=rj.external_parameters)
+        isotope_data=isotope_data)
 
     # isotope Types
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters)
-    _, SIsotopeType = PB.split_nameisotope("::SIsotope", rj.external_parameters)
+    _, CIsotopeType = PB.split_nameisotope("::CIsotope", isotope_data)
+    _, SIsotopeType = PB.split_nameisotope("::SIsotope", isotope_data)
 
     PB.add_method_do!(
         rj,

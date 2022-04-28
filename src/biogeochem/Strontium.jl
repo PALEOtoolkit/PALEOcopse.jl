@@ -17,8 +17,11 @@ A Sr model configuration should contain the following Reservoirs and Reactions:
 module Strontium
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
 
 import Infiltrator # Julia debugger
+
+const SrIsotopeDefault = PB.IsotopeLinear
 
 """
     ReactionSrMantleCrust
@@ -26,6 +29,12 @@ import Infiltrator # Julia debugger
 Calculate strontium isotope composition of mantle, old (granite), and new (basalt) igneous rocks as a function of time,
 given present day isotopic composition and an initial uniform value at the formation of the Earth.
 Assumes all subsequent evolution was due to Rb decay with different Rb/Sr ratios (ie no exchange between these mantle and rock reserovirs).
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionSrMantleCrust{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -98,6 +107,12 @@ end
     ReactionSrSed
 
 Calculate contribution to rate of change of a sedimentary `Sr_sed` reservoir due to metamorphic loss, and Rb decay.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionSrSed{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -116,7 +131,7 @@ Base.@kwdef mutable struct ReactionSrSed{P} <: PB.AbstractReaction
 end
 
 function PB.register_methods!(rj::ReactionSrSed)
-    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters)
+    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters; default=SrIsotopeDefault)
 
     vars = [
         PB.VarDepScalar("global.tforce", "yr",  "historical time at which to apply forcings, present = 0 yr"),
@@ -141,7 +156,7 @@ end
 function PB.check_configuration(rj::ReactionSrSed, model::PB.Model)
     configok = true
 
-    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters)
+    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters; default=SrIsotopeDefault)
    
     if !(SrIsotopeType in (PB.ScalarData, PB.IsotopeLinear))
         @warn "ReactionSrSed.check_configuration unsupported IsotopeType $SrIsotopeType"
@@ -193,6 +208,12 @@ end
     ReactionSrLand
 
 Calculate Sr weathering flux from land surface, given relative (normalized) basalt, granite, carbonate weathering rates and Sr isotopic composition.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionSrLand{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -213,7 +234,7 @@ end
 
 
 function PB.register_methods!(rj::ReactionSrLand)
-    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters)
+    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters; default=SrIsotopeDefault)
 
     vars = [
         PB.VarDepScalar("basw_relative", "",  "Basalt weathering normalized to present"),
@@ -284,6 +305,12 @@ end
 
 Calculate evolution of an ocean`Sr` reservoir due to ocean burial (assumed proportional to carbonate burial), 
 seafloor weathering, and hydrothermal (mantle) input fluxes.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionSrOceanfloor{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -305,7 +332,7 @@ end
 
 
 function PB.register_methods!(rj::ReactionSrOceanfloor)
-    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters)
+    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters; default=SrIsotopeDefault)
 
     vars = [
         PB.VarDepScalar("global.DEGASS",        "",         "normalized DEGASS forcing"),

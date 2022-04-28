@@ -2,6 +2,7 @@
 module MapAtmOceanReservoirs
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
 
 """
     ReactionAtmOcean_O
@@ -14,6 +15,12 @@ file to present-day atmospheric value).
 
 Also calculates additional quantities `pO2atm` (partial pressure in bar), and `pO2PAL` (equal to `O_norm`), which should usually
 be relinked to the `atm` Domain in the config file. Assumes ocean oxygen is a neglible fraction of the total.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionAtmOcean_O <:  PB.AbstractReaction
     base::PB.ReactionBase
@@ -92,6 +99,12 @@ The calculation of `phi` atm-ocean fraction is set by Parameter `f_atfrac`:
   hence `[CO3--]` carbonate ion concentration is approximately constant.
 
 If Parameter `delta_atm_ocean == true`, also calculates atmosphere CO2 and ocean DIC isotopic fractionation.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionAtmOcean_A{P} <:  PB.AbstractReaction
     base::PB.ReactionBase
@@ -111,7 +124,7 @@ end
 
 function PB.register_methods!(rj::ReactionAtmOcean_A)
 
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters)
+    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters; default=PB.ScalarData)
   
     vars = [
         PB.VarStateExplicitScalar("A",          "mol",      "atm-ocean inorganic carbon (CO2 + DIC)",

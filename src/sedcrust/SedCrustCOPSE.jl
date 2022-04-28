@@ -2,7 +2,7 @@
 module SedCrustCOPSE
 
 import PALEOboxes as PB
-
+using PALEOboxes.DocStrings
 import PALEOcopse
 
 
@@ -14,6 +14,12 @@ sedimentary carbon and sulphur reservoirs.
 
 Fluxes are added to flux couplers:
 - `fluxSedCrusttoAOcean`:  carbon and sulphur "degassing" fluxes
+
+# Parameters
+$(PARS)
+
+# Methods and Variables for default Parameters
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionSedCrustCOPSE{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -46,6 +52,12 @@ end
 
 function PB.register_methods!(rj::ReactionSedCrustCOPSE)
 
+    # isotopes with defaults
+    isotope_data = merge(
+        Dict("CIsotope"=>PB.ScalarData, "SIsotope"=>PB.ScalarData),
+        rj.external_parameters
+    )
+        
     # state variables we use
     state_varnames = [
         ("C::CIsotope",          "mol C",    "Sedimentary carbonate"),
@@ -58,7 +70,7 @@ function PB.register_methods!(rj::ReactionSedCrustCOPSE)
         )
     end
     vars_res, vars_sms, vars_dep_res = PB.Reservoirs.ReservoirLinksVector(
-        rj.external_parameters, state_varnames
+        isotope_data, state_varnames
     )
     
     # dependencies
@@ -92,13 +104,13 @@ function PB.register_methods!(rj::ReactionSedCrustCOPSE)
     end
     fluxSedCrusttoAOcean = PB.Fluxes.FluxContribScalar(
         "fluxSedCrusttoAOcean.flux_", aocean_fluxnames,
-        isotope_data=rj.external_parameters
+        isotope_data=isotope_data
     )
 
     # isotope Types
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters)
+    _, CIsotopeType = PB.split_nameisotope("::CIsotope", isotope_data)
     if rj.pars.enableS.v
-        _, SIsotopeType = PB.split_nameisotope("::SIsotope", rj.external_parameters)
+        _, SIsotopeType = PB.split_nameisotope("::SIsotope", isotope_data)
     else
         SIsotopeType = PB.ScalarData
     end

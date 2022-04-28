@@ -3,9 +3,19 @@ module LandBergman2004
 
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
 
+"""
+    ReactionLandBergman2004
 
-"COPSE Bergman(2004) land surface"
+COPSE Bergman(2004) land surface
+
+# Parameters
+$(PARS)
+
+# Methods and Variables for default Parameters
+$(METHODS_DO)
+"""
 Base.@kwdef mutable struct ReactionLandBergman2004{P} <: PB.AbstractReaction
     base::PB.ReactionBase
 
@@ -132,22 +142,28 @@ function PB.register_methods!(rj::ReactionLandBergman2004)
             ("eps_eqbw",    "per mil", "approximate atmosphere-runoff d13C")
         ])
 
+    # isotopes with defaults
+    isotope_data = merge(
+        Dict("CIsotope"=>PB.ScalarData, "SIsotope"=>PB.ScalarData),
+        rj.external_parameters
+    )
+
     # Add flux couplers
     fluxAtoLand = PB.Fluxes.FluxContribScalar(
         "fluxAtoLand.flux_", ["CO2::CIsotope", "O2"],
-        isotope_data=rj.external_parameters)
+        isotope_data=isotope_data)
 
     fluxRtoOcean = PB.Fluxes.FluxContribScalar(
         "fluxRtoOcean.flux_", ["DIC::CIsotope", "TAlk", "Ca", "P", "SO4::SIsotope"],
-        isotope_data=rj.external_parameters)
+        isotope_data=isotope_data)
 
     fluxLandtoSedCrust = PB.Fluxes.FluxContribScalar(
         "fluxLandtoSedCrust.flux_", ["Ccarb::CIsotope", "Corg::CIsotope", "GYP::SIsotope", "PYR::SIsotope"],
-        isotope_data=rj.external_parameters)
+        isotope_data=isotope_data)
 
     # isotope Types
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters)
-    _, SIsotopeType = PB.split_nameisotope("::SIsotope", rj.external_parameters)
+    _, CIsotopeType = PB.split_nameisotope("::CIsotope", isotope_data)
+    _, SIsotopeType = PB.split_nameisotope("::SIsotope", isotope_data)
 
     PB.add_method_do!(
         rj,

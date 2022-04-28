@@ -3,6 +3,7 @@ module Temperature
 
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
 
 """
     ReactionGlobalTemperatureCK1992
@@ -12,6 +13,12 @@ Provides a `TEMP` state variable, with either an error term for a DAE solver (if
 or a restoring term for an ODE solver (if `temp_DAE = false`).
 
 Valid range: 1e-8 < pCO2atm < 1e-2 (bar), 273.15 < TEMP < 283.15 (K)
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionGlobalTemperatureCK1992{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -151,6 +158,12 @@ end
     ReactionGlobalTemperatureBerner
     
 Global temperature calculation from pCO2, with implicit change in solar luminosity (calculated from forcing time tforce).
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionGlobalTemperatureBerner{P} <: PB.AbstractReaction
     base::PB.ReactionBase

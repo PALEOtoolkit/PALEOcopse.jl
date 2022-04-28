@@ -2,7 +2,7 @@
 module CIsotopes
 
 import PALEOboxes as PB
-
+using PALEOboxes.DocStrings
 """
     ReactionCIsotopes
 
@@ -10,6 +10,12 @@ Carbon isotope fractionation from Bergman (2004) COPSE biogeochemical model.
 
 Calculates global mean isotope fractionation for marine carbonate burial and land and ocean organic carbon burial
 from global mean `TEMP`, `pCO2PAL` and `pO2PAL`.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables for default Parameters
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionCIsotopes{P} <:  PB.AbstractReaction
     base::PB.ReactionBase

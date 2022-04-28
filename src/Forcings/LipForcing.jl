@@ -6,6 +6,8 @@ import XLSX  # Excel file access
 import Roots
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
+
 import PALEOcopse
 
 import Infiltrator # Julia debugger
@@ -223,6 +225,12 @@ flood basalt area.
 
 If Parameter `co2releasefield` != `NoCO2`, a CO2 pulse (duration 2e5yr, magnitude from spreadsheet, -5 per mil) is output as
 `LIP_CO2` and added to Variable `flux_C` -> `fluxSedCrusttoAOcean.flux_C`.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionForce_LIPs{P} <:  PB.AbstractReaction
     base::PB.ReactionBase
@@ -254,7 +262,7 @@ function PB.register_methods!(rj::ReactionForce_LIPs)
 
     rj.LIP_data = read_lips_xlsx(lipfile)
    
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters)    
+    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters; default=PB.ScalarData)    
     @info "    CIsotopeType=$(CIsotopeType) from CIsotope in external_parameters"
 
     vars = [
