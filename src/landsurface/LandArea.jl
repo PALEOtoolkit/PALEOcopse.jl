@@ -1,6 +1,7 @@
 module LandArea
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
 
 """
     ReactionLandArea
@@ -8,6 +9,12 @@ import PALEOboxes as PB
 Calculate land areas and lithology.
 
 Provides `GRAN_AREA` and `BA_AREA`.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables for default Parameters
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionLandArea{P} <:  PB.AbstractReaction
     base::PB.ReactionBase

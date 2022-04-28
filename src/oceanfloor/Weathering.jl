@@ -3,6 +3,7 @@ module Weathering
 
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
 
 """
     ReactionSeafloorWeathering
@@ -15,6 +16,12 @@ and is then distributed over a range of oceanfloor cells according the Paramter 
 Fluxes are added to flux couplers:
 - `fluxOceanfloor`: ocean solute fluxes
 - `fluxOceanBurial`: carbonate burial flux
+
+# Parameters
+$(PARS)
+
+# Methods and Variables for default Parameters
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionSeafloorWeathering{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -45,7 +52,12 @@ end
 
 
 function PB.register_methods!(rj::ReactionSeafloorWeathering)
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters)
+    # isotopes with defaults
+    isotope_data = merge(
+        Dict("CIsotope"=>PB.ScalarData, ),
+        rj.external_parameters
+    )
+    _, CIsotopeType = PB.split_nameisotope("::CIsotope", isotope_data)
 
     vars = [
         PB.VarDep("global.RHOSFW",          "", "seafloor weathering-specific additional forcing (usually 1.0)"),
@@ -61,16 +73,17 @@ function PB.register_methods!(rj::ReactionSeafloorWeathering)
         # PB.VarPropScalar("sfw_total",     "mol yr-1", "total seafloor weathering flux"
     ]        
 
+    
     # flux couplers
     fluxOceanBurial = PB.Fluxes.FluxContrib(
         "fluxOceanBurial.flux_",
         ["Ccarb::CIsotope"],
-        isotope_data=rj.external_parameters)
+        isotope_data=isotope_data)
     
     fluxOceanfloorSolute = PB.Fluxes.FluxContrib(
         "fluxOceanfloor.soluteflux_",
         ["DIC::CIsotope"],
-        isotope_data=rj.external_parameters)
+        isotope_data=isotope_data)
     
     if rj.pars.sfw_distribution_method.v == "Depth"
         grid_vars = [

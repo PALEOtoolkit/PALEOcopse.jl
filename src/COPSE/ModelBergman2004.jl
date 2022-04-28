@@ -6,6 +6,8 @@ COPSE (Bergman, 2004) Phanerozoic biogeochemical model.
 module ModelBergman2004
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
+
 import PALEOcopse
 
 """
@@ -14,6 +16,12 @@ import PALEOcopse
 Monolithic COPSE Bergman(2004) model, providing all biogeochemistry as a single Reaction in a single `global` Domain.
 
 Requires reservoirs, forcings, and global temperature (ReactionGlobalTemperatureCK1992) to form a complete model.
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionModelBergman2004{P} <: PB.AbstractReaction
     base::PB.ReactionBase

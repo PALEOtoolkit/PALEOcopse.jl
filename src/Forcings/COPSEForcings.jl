@@ -8,6 +8,8 @@ import XLSX  # Excel file access
 import DataFrames 
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
+
 import PALEOcopse
 
 
@@ -15,6 +17,12 @@ import PALEOcopse
     ReactionForce_CK_Solar
 
 `SOLAR` forcing (incident solar flux at Earth, W m^-2)
+
+# Parameters
+$(PARS)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionForce_CK_Solar <:  PB.AbstractReaction
     base::PB.ReactionBase
@@ -57,6 +65,9 @@ Provides:
      Bergman etal (2004)
 
 Interpolates and optionally applies naive extrapolation of forcings into (constant) Precambrian and future
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionForce_UDWEbergman2004 <:  PB.AbstractReaction
     base::PB.ReactionBase
@@ -100,7 +111,7 @@ function PB.register_methods!(rj::ReactionForce_UDWEbergman2004)
 
     vars = [
         PB.VarDepScalar("tforce",     "yr",  "historical time at which to apply forcings, present = 0 yr"),
-        PB.VarPropScalar("UPLIFT",    "",  "tectonic uplift normalized to present"),
+        PB.VarPropScalar("UPLIFT",    "",  "tectonic uplift normalized to present. GEOCARB II (Berner 1994) based on Sr isotopes."),
         PB.VarPropScalar("DEGASS",    "",  "metamorphic and volcanic degassing normalized to present"),
         PB.VarPropScalar("EVO",       "",  "land plant evolution and colonisation"),
         PB.VarPropScalar("W",         "",  "biological enhancement of weathering"),
@@ -135,6 +146,9 @@ end
     ReactionForce_Bbergman2004
 
 `Bforcing` forcing, calcerous plankton evolution (COPSE 2004)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionForce_Bbergman2004 <:  PB.AbstractReaction
     base::PB.ReactionBase
@@ -175,6 +189,9 @@ end
 
 `CPland_relative` forcing.
 CP land burial ratio doubles in permo-carboniferous (COPSE)
+
+# Methods and Variables
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionForce_CPlandrelbergman2004 <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -220,6 +237,13 @@ Generic forcing interpolated from values in spreadsheet. Spreadsheet should cont
 with a single header row, and time in Ma as the first column.
 
 Interpolates and optionally applies naive extrapolation of forcings into (constant) Precambrian and future
+
+# Parameters
+$(PARS)
+
+# Methods and Variables TODO
+- `tforce` (yr) historical time at which to apply forcing
+- `<forcename>` name from Parameter `forcename`
 """
 Base.@kwdef mutable struct ReactionForce_spreadsheet{P} <:  PB.AbstractReaction
     base::PB.ReactionBase

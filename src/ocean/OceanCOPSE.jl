@@ -3,6 +3,7 @@ module OceanCOPSE
 
 
 import PALEOboxes as PB
+using PALEOboxes.DocStrings
 
 import PALEOcopse
 
@@ -13,6 +14,12 @@ COPSE Bergman(2004), COPSE Reloaded Lenton etal (2018) 0D ocean
 
 Fluxes are added to flux couplers:
 - `fluxOceanBurial`: ocean burial fluxes
+
+# Parameters
+$(PARS)
+
+# Methods and Variables for default Parameters
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionOceanCOPSE{P} <: PB.AbstractReaction
     base::PB.ReactionBase
@@ -96,6 +103,12 @@ end
 
 function PB.register_methods!(rj::ReactionOceanCOPSE)
 
+    # isotopes with defaults
+    isotope_data = merge(
+        Dict("CIsotope"=>PB.ScalarData, "SIsotope"=>PB.ScalarData),
+        rj.external_parameters
+    )
+
     # TODO - not the right place for this ? 
     # define a 1 cell grid
     rj.domain.grid = PB.Grids.UnstructuredVectorGrid(ncells=1)
@@ -116,7 +129,7 @@ function PB.register_methods!(rj::ReactionOceanCOPSE)
         push!(state_varnames, ("N",               "mol N",    "Marine nitrogen"))
     end
     vars_res, vars_sms, vars_dep_res = PB.Reservoirs.ReservoirLinksVector(
-        rj.external_parameters, state_varnames
+        isotope_data, state_varnames
     )
 
     # dependencies required in do_react
@@ -181,13 +194,13 @@ function PB.register_methods!(rj::ReactionOceanCOPSE)
     fluxOceanBurial = PB.Fluxes.FluxContrib( # Scalar ?
         "fluxOceanBurial.flux_",
         burial_fluxnames,
-        isotope_data=rj.external_parameters
+        isotope_data=isotope_data
     ) 
   
     # isotope Types
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters)
+    _, CIsotopeType = PB.split_nameisotope("::CIsotope", isotope_data)
     if rj.pars.enableS.v
-        _, SIsotopeType = PB.split_nameisotope("::SIsotope", rj.external_parameters)
+        _, SIsotopeType = PB.split_nameisotope("::SIsotope", isotope_data)
     else
         SIsotopeType = PB.ScalarData
     end
