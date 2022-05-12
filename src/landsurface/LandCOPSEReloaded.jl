@@ -495,6 +495,16 @@ Base.@kwdef mutable struct ReactionLandWeatheringFluxes{P} <: PB.AbstractReactio
             description="fraction of locb assumed to occur in aquatic settings (not coals)"),
         PB.ParDouble("CPland0",        1000.0,     units="",
             description="present-day C/P land burial"),
+
+        # Isotopes
+        PB.ParType(PB.AbstractData, "CIsotope", PB.ScalarData,
+            external=true,
+            allowed_values=PB.IsotopeTypes,
+            description="disable / enable carbon isotopes and specify isotope type"),
+        PB.ParType(PB.AbstractData, "SIsotope", PB.ScalarData,
+            external=true,
+            allowed_values=PB.IsotopeTypes,
+            description="disable / enable sulphur isotopes and specify isotope type"),
     )
 
 end
@@ -580,28 +590,22 @@ function PB.register_methods!(rj::ReactionLandWeatheringFluxes)
         ]
     )
 
-    # isotopes with defaults
-    isotope_data = merge(
-        Dict("CIsotope"=>PB.ScalarData, "SIsotope"=>PB.ScalarData),
-        rj.external_parameters
-    )
+    # isotope Types
+    CIsotopeType = rj.pars.CIsotope.v
+    SIsotopeType = rj.pars.SIsotope.v
 
     # Add flux couplers
     fluxAtoLand = PB.Fluxes.FluxContribScalar(
-        "fluxAtoLand.flux_", ["CO2::CIsotope", "O2"],
-        isotope_data=isotope_data)
+        "fluxAtoLand.flux_", ["CO2::$CIsotopeType", "O2"],
+        isotope_data=Dict())
 
     fluxRtoOcean = PB.Fluxes.FluxContribScalar(
-        "fluxRtoOcean.flux_", ["DIC::CIsotope", "TAlk", "Ca", "P", "SO4::SIsotope"],
-        isotope_data=isotope_data)
+        "fluxRtoOcean.flux_", ["DIC::$CIsotopeType", "TAlk", "Ca", "P", "SO4::$SIsotopeType"],
+        isotope_data=Dict())
 
     fluxLandtoSedCrust = PB.Fluxes.FluxContribScalar(
-        "fluxLandtoSedCrust.flux_", ["Ccarb::CIsotope", "Corg::CIsotope", "GYP::SIsotope", "PYR::SIsotope"],
-        isotope_data=isotope_data)
-
-    # isotope Types
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", isotope_data)
-    _, SIsotopeType = PB.split_nameisotope("::SIsotope", isotope_data)
+        "fluxLandtoSedCrust.flux_", ["Ccarb::$CIsotopeType", "Corg::$CIsotopeType", "GYP::$SIsotopeType", "PYR::$SIsotopeType"],
+        isotope_data=Dict())
 
     PB.add_method_do!(
         rj,

@@ -127,20 +127,26 @@ Base.@kwdef mutable struct ReactionSrSed{P} <: PB.AbstractReaction
             description="functional form for sediment Sr metamorphic loss"),
         PB.ParDouble("k_Sr_metam", 13e9, units="mol yr-1",
             description="rate of metamorphic loss of Sr from sedimentary reservoir"),
+        
+        # Isotopes
+        PB.ParType(PB.AbstractData, "SrIsotope", SrIsotopeDefault,
+            external=true,
+            allowed_values=[PB.ScalarData, PB.IsotopeLinear],
+            description="disable / enable Sr isotopes and specify isotope type"),
     )
 end
 
 function PB.register_methods!(rj::ReactionSrSed)
-    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters; default=SrIsotopeDefault)
+    SrIsotopeType = rj.pars.SrIsotope.v
 
     vars = [
         PB.VarDepScalar("global.tforce", "yr",  "historical time at which to apply forcings, present = 0 yr"),
         PB.VarDepScalar("global.DEGASS", "",  "normalized DEGASS forcing"),
     
-        PB.VarDepScalar("Sr_sed", "mol",  "sedimentary Sr", attributes=(:field_data=>SrIsotopeType, )),
+        PB.VarDepScalar("Sr_sed", "mol",  "sedimentary Sr"),
         PB.VarDepScalar("Sr_sed_delta", "",  "d87Sr of sedimentary Sr"),
         PB.VarDepScalar("Sr_sed_norm", "",  "normalized sedimentary Sr"),    
-        PB.VarContribScalar("Sr_sed_sms", "mol yr-1",  "sedimentary Sr source minus sink flux", attributes=(:field_data=>SrIsotopeType, ))
+        PB.VarContribScalar("Sr_sed_sms", "mol yr-1",  "sedimentary Sr source minus sink flux")
     ]
 
     PB.add_method_do!(
@@ -153,18 +159,6 @@ function PB.register_methods!(rj::ReactionSrSed)
     return nothing
 end
 
-function PB.check_configuration(rj::ReactionSrSed, model::PB.Model)
-    configok = true
-
-    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters; default=SrIsotopeDefault)
-   
-    if !(SrIsotopeType in (PB.ScalarData, PB.IsotopeLinear))
-        @warn "ReactionSrSed.check_configuration unsupported IsotopeType $SrIsotopeType"
-        configok = false
-    end
-
-    return configok
-end
 
 function do_Sr_sed(
     m::PB.ReactionMethod,
@@ -229,12 +223,18 @@ Base.@kwdef mutable struct ReactionSrLand{P} <: PB.AbstractReaction
             description="functional form for sediment Sr weathering"),
         PB.ParDouble("k_Sr_sedw", 17e9, units="mol yr-1",
             description="Sr weathering rate constant from sediments"),
+
+        # Isotopes
+        PB.ParType(PB.AbstractData, "SrIsotope", SrIsotopeDefault,
+            external=true,
+            allowed_values=[PB.ScalarData, PB.IsotopeLinear],
+            description="disable / enable Sr isotopes and specify isotope type"),
     )
 end
 
 
 function PB.register_methods!(rj::ReactionSrLand)
-    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters; default=SrIsotopeDefault)
+    SrIsotopeType = rj.pars.SrIsotope.v
 
     vars = [
         PB.VarDepScalar("basw_relative", "",  "Basalt weathering normalized to present"),
@@ -327,12 +327,18 @@ Base.@kwdef mutable struct ReactionSrOceanfloor{P} <: PB.AbstractReaction
             description="Sr burial output"),
         PB.ParDouble("k_mccb_0", NaN, units="mol yr-1",
             description="Carbonate burial rate to normalize Sr burial output for f_Sr_sedb=\"carbburial\""),
+
+        # Isotopes
+        PB.ParType(PB.AbstractData, "SrIsotope", SrIsotopeDefault,
+            external=true,
+            allowed_values=[PB.ScalarData, PB.IsotopeLinear],
+            description="disable / enable Sr isotopes and specify isotope type"),
     )
 end
 
 
 function PB.register_methods!(rj::ReactionSrOceanfloor)
-    _, SrIsotopeType = PB.split_nameisotope("::SrIsotope", rj.external_parameters; default=SrIsotopeDefault)
+    SrIsotopeType = rj.pars.SrIsotope.v
 
     vars = [
         PB.VarDepScalar("global.DEGASS",        "",         "normalized DEGASS forcing"),

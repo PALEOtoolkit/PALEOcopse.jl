@@ -245,6 +245,10 @@ Base.@kwdef mutable struct ReactionForce_LIPs{P} <:  PB.AbstractReaction
             description="smooth LIP basalt emplacement"),
         PB.ParString("co2releasefield", "NoCO2", allowed_values=["NoCO2", "CO2min", "CO2max"],
             description="LIP CO2 release"),
+        PB.ParType(PB.AbstractData, "CIsotope", PB.ScalarData,
+            external=true,
+            allowed_values=PB.IsotopeTypes,
+            description="disable / enable carbon isotopes and specify isotope type"),
     )
 
     LIP_data = nothing
@@ -262,8 +266,8 @@ function PB.register_methods!(rj::ReactionForce_LIPs)
 
     rj.LIP_data = read_lips_xlsx(lipfile)
    
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters; default=PB.ScalarData)    
-    @info "    CIsotopeType=$(CIsotopeType) from CIsotope in external_parameters"
+    CIsotopeType = rj.pars.CIsotope.v
+    @info "    CIsotopeType=$(CIsotopeType)"
 
     vars = [
         PB.VarDepScalar("tforce",     "yr",  "historical time at which to apply forcings, present = 0 yr"),

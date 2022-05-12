@@ -117,6 +117,10 @@ Base.@kwdef mutable struct ReactionAtmOcean_A{P} <:  PB.AbstractReaction
             description="calculate d13CO2, d13DIC relative to A"),
         PB.ParBool("fix_cisotopefrac_T", false,
             description="remove temperature dependence of d13CO2, d13DIC relative to A"),
+        PB.ParType(PB.AbstractData, "CIsotope", PB.ScalarData,
+            external=true,
+            allowed_values=PB.IsotopeTypes,
+            description="disable / enable carbon isotopes and specify isotope type"),
     )
 
     norm_value::Float64 = NaN
@@ -124,7 +128,7 @@ end
 
 function PB.register_methods!(rj::ReactionAtmOcean_A)
 
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", rj.external_parameters; default=PB.ScalarData)
+    CIsotopeType = rj.pars.CIsotope.v
   
     vars = [
         PB.VarStateExplicitScalar("A",          "mol",      "atm-ocean inorganic carbon (CO2 + DIC)",
