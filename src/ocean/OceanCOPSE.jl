@@ -96,6 +96,15 @@ Base.@kwdef mutable struct ReactionOceanCOPSE{P} <: PB.AbstractReaction
         PB.ParString("f_sisotopefrac","fixed",  allowed_values=["fixed", "copse_O2"],
             description="S isotope fractionation calculation."),
 
+        # Isotopes
+        PB.ParType(PB.AbstractData, "CIsotope", PB.ScalarData,
+            external=true,
+            allowed_values=PB.IsotopeTypes,
+            description="disable / enable carbon isotopes and specify isotope type"),
+        PB.ParType(PB.AbstractData, "SIsotope", PB.ScalarData,
+            external=true,
+            allowed_values=PB.IsotopeTypes,
+            description="disable / enable sulphur isotopes and specify isotope type"),
     )
 
 end
@@ -103,33 +112,35 @@ end
 
 function PB.register_methods!(rj::ReactionOceanCOPSE)
 
-    # isotopes with defaults
-    isotope_data = merge(
-        Dict("CIsotope"=>PB.ScalarData, "SIsotope"=>PB.ScalarData),
-        rj.external_parameters
-    )
-
+  
     # TODO - not the right place for this ? 
     # define a 1 cell grid
     rj.domain.grid = PB.Grids.UnstructuredVectorGrid(ncells=1)
     PB.Grids.set_subdomain!(rj.domain.grid, "oceansurface", PB.Grids.BoundarySubdomain([1]), true)
     PB.Grids.set_subdomain!(rj.domain.grid, "oceanfloor",   PB.Grids.BoundarySubdomain([1]), true)
 
-   
+    # isotope Types
+    CIsotopeType = rj.pars.CIsotope.v
+    if rj.pars.enableS.v
+        SIsotopeType = rj.pars.SIsotope.v
+    else
+        SIsotopeType = PB.ScalarData
+    end
+
     state_varnames = [
-        ("P",               "mol P",    "Marine phosphorus"),         
-        ("O",               "mol O2",   "Atm-ocean oxygen"),
-        ("(DIC::CIsotope)",    "mol C",    "ocean inorganic carbon"),
-        ("(CAL)",             "mol Ca",   "Marine calcium"),
+        ("P",                   "mol P",    "Marine phosphorus"),         
+        ("O",                   "mol O2",   "Atm-ocean oxygen"),
+        ("(DIC::$CIsotopeType)",    "mol C",    "ocean inorganic carbon"),
+        ("(CAL)",               "mol Ca",   "Marine calcium"),
     ]
     if rj.pars.enableS.v
-        push!(state_varnames, ("S::SIsotope",      "mol S",    "Marine sulphate"))
+        push!(state_varnames, ("S::$SIsotopeType",      "mol S",    "Marine sulphate"))
     end
     if rj.pars.f_ncycle.v
         push!(state_varnames, ("N",               "mol N",    "Marine nitrogen"))
     end
     vars_res, vars_sms, vars_dep_res = PB.Reservoirs.ReservoirLinksVector(
-        isotope_data, state_varnames
+        Dict(), state_varnames
     )
 
     # dependencies required in do_react
@@ -184,26 +195,18 @@ function PB.register_methods!(rj::ReactionOceanCOPSE)
 
     # Define flux coupler (a NamedTuple of Variables)
     burial_fluxnames = [   
-        "Corg::CIsotope", "Ccarb::CIsotope", 
+        "Corg::$CIsotopeType", "Ccarb::$CIsotopeType", 
         "Porg", "Pauth", "PFe", "P", 
     ]
     if rj.pars.enableS.v
-        push!(burial_fluxnames, "GYP::SIsotope", "PYR::SIsotope")
+        push!(burial_fluxnames, "GYP::$SIsotopeType", "PYR::$SIsotopeType")
     end
 
     fluxOceanBurial = PB.Fluxes.FluxContrib( # Scalar ?
         "fluxOceanBurial.flux_",
         burial_fluxnames,
-        isotope_data=isotope_data
+        isotope_data=Dict(),
     ) 
-  
-    # isotope Types
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", isotope_data)
-    if rj.pars.enableS.v
-        _, SIsotopeType = PB.split_nameisotope("::SIsotope", isotope_data)
-    else
-        SIsotopeType = PB.ScalarData
-    end
 
     # Now assemble these lists into properties and dependencies for each method,
     # following the Matlab COPSE convention that:

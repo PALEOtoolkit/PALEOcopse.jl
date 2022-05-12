@@ -47,17 +47,19 @@ Base.@kwdef mutable struct ReactionSeafloorWeathering{P} <: PB.AbstractReaction
 
         PB.ParString("f_sfw_d13C",   "delta_DIC",  allowed_values=["delta_DIC", "delta_mccb"],
             description="d13C delta"),
+
+        # Isotopes
+        PB.ParType(PB.AbstractData, "CIsotope", PB.ScalarData,
+            external=true,
+            allowed_values=PB.IsotopeTypes,
+            description="disable / enable carbon isotopes and specify isotope type"),
     )
 end
 
 
 function PB.register_methods!(rj::ReactionSeafloorWeathering)
-    # isotopes with defaults
-    isotope_data = merge(
-        Dict("CIsotope"=>PB.ScalarData, ),
-        rj.external_parameters
-    )
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", isotope_data)
+
+    CIsotopeType = rj.pars.CIsotope.v
 
     vars = [
         PB.VarDep("global.RHOSFW",          "", "seafloor weathering-specific additional forcing (usually 1.0)"),
@@ -77,13 +79,13 @@ function PB.register_methods!(rj::ReactionSeafloorWeathering)
     # flux couplers
     fluxOceanBurial = PB.Fluxes.FluxContrib(
         "fluxOceanBurial.flux_",
-        ["Ccarb::CIsotope"],
-        isotope_data=isotope_data)
+        ["Ccarb::$CIsotopeType"],
+        isotope_data=Dict())
     
     fluxOceanfloorSolute = PB.Fluxes.FluxContrib(
         "fluxOceanfloor.soluteflux_",
-        ["DIC::CIsotope"],
-        isotope_data=isotope_data)
+        ["DIC::$CIsotopeType"],
+        isotope_data=Dict())
     
     if rj.pars.sfw_distribution_method.v == "Depth"
         grid_vars = [

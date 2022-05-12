@@ -44,7 +44,17 @@ Base.@kwdef mutable struct ReactionSedCrustCOPSE{P} <: PB.AbstractReaction
         # off organic carbon degassing at low pO2. This has a big effect at low pO2 when
         # oxidative weathering is oxygen-independent (ie Ordovician and earlier)
         PB.ParString("f_ocdeg",    "O2indep",  allowed_values=["O2indep", "O2copsecrashprevent"],
-            description="roll off orgC degassing at low pO2")
+            description="roll off orgC degassing at low pO2"),
+
+        # Isotopes
+        PB.ParType(PB.AbstractData, "CIsotope", PB.ScalarData,
+            external=true,
+            allowed_values=PB.IsotopeTypes,
+            description="disable / enable carbon isotopes and specify isotope type"),
+        PB.ParType(PB.AbstractData, "SIsotope", PB.ScalarData,
+            external=true,
+            allowed_values=PB.IsotopeTypes,
+            description="disable / enable sulphur isotopes and specify isotope type"),
     )
 
 end
@@ -52,25 +62,27 @@ end
 
 function PB.register_methods!(rj::ReactionSedCrustCOPSE)
 
-    # isotopes with defaults
-    isotope_data = merge(
-        Dict("CIsotope"=>PB.ScalarData, "SIsotope"=>PB.ScalarData),
-        rj.external_parameters
-    )
+    # isotope Types
+    CIsotopeType = rj.pars.CIsotope.v
+    if rj.pars.enableS.v
+        SIsotopeType = rj.pars.SIsotope.v
+    else
+        SIsotopeType = PB.ScalarData
+    end
         
     # state variables we use
     state_varnames = [
-        ("C::CIsotope",          "mol C",    "Sedimentary carbonate"),
-        ("G::CIsotope",          "mol C",    "Sedimentary organic carbon"),
+        ("C::$CIsotopeType",          "mol C",    "Sedimentary carbonate"),
+        ("G::$CIsotopeType",          "mol C",    "Sedimentary organic carbon"),
     ]
     if rj.pars.enableS.v
         push!(state_varnames,
-            ("GYP::SIsotope",        "mol S",    "Sedimentary gypsum"),
-            ("PYR::SIsotope",        "mol S",    "Sedimentary pyrite"),
+            ("GYP::$SIsotopeType",        "mol S",    "Sedimentary gypsum"),
+            ("PYR::$SIsotopeType",        "mol S",    "Sedimentary pyrite"),
         )
     end
     vars_res, vars_sms, vars_dep_res = PB.Reservoirs.ReservoirLinksVector(
-        isotope_data, state_varnames
+        Dict(), state_varnames
     )
     
     # dependencies
@@ -98,22 +110,14 @@ function PB.register_methods!(rj::ReactionSedCrustCOPSE)
     end
     vars_prop = PB.VarVector(PB.VarPropScalar, prop_varnames)
 
-    aocean_fluxnames = ["C::CIsotope", "Redox"]
+    aocean_fluxnames = ["C::$CIsotopeType", "Redox"]
     if rj.pars.enableS.v
-        push!(aocean_fluxnames, "S::SIsotope")
+        push!(aocean_fluxnames, "S::$SIsotopeType")
     end
     fluxSedCrusttoAOcean = PB.Fluxes.FluxContribScalar(
         "fluxSedCrusttoAOcean.flux_", aocean_fluxnames,
-        isotope_data=isotope_data
+        isotope_data=Dict()
     )
-
-    # isotope Types
-    _, CIsotopeType = PB.split_nameisotope("::CIsotope", isotope_data)
-    if rj.pars.enableS.v
-        _, SIsotopeType = PB.split_nameisotope("::SIsotope", isotope_data)
-    else
-        SIsotopeType = PB.ScalarData
-    end
 
     PB.add_method_do!(
         rj,
