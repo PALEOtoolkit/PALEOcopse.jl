@@ -241,11 +241,11 @@ function PB.register_methods!(rj::ReactionSrLand)
         PB.VarDepScalar("granw_relative", "", "Granite weathering normalized to present"),
         PB.VarDepScalar("carbw_relative", "", "Carbonate weathering normalized to present"),
     
-        PB.VarContribScalar("fluxRtoOcean_Sr", "mol yr-1",  "Sr riverine flux",
-            link_namestr="fluxRtoOcean.flux_Sr", attributes=(:field_data=>SrIsotopeType,)),
+        PB.VarContribScalar("fluxRtoOcean_Sr"=>"fluxRtoOcean.flux_Sr", "mol yr-1",  "Sr riverine flux",
+            attributes=(:field_data=>SrIsotopeType,)),
        
-        PB.VarContribScalar("fluxLandtoSedCrust_Sr", "mol yr-1",  "Sr flux from land to sedimentary reservoirs",
-            link_namestr="fluxLandtoSedCrust.flux_Sr", attributes=(:field_data=>SrIsotopeType,)),   
+        PB.VarContribScalar("fluxLandtoSedCrust_Sr"=>"fluxLandtoSedCrust.flux_Sr", "mol yr-1",  "Sr flux from land to sedimentary reservoirs",
+            attributes=(:field_data=>SrIsotopeType,)),   
     
         PB.VarDepScalar("sedcrust.Sr_old_ig_delta",  "", "d87Sr old igneous rocks (granite)"),
         PB.VarDepScalar("sedcrust.Sr_new_ig_delta",  "", "d87Sr new igneous rocks (basalt)"),
@@ -345,13 +345,12 @@ function PB.register_methods!(rj::ReactionSrOceanfloor)
         PB.VarDepScalar("land.silwcarbw_relative","",       "normalized land silicate+carbonate weathering"),
         PB.VarDepScalar("sfw_relative",         "",         "normalized seafloor weathering"),
         
-        PB.VarContrib("solutefluxOceanfloor_Sr","mol yr-1", "Sr oceanfloor solute flux",
-            link_namestr="fluxOceanfloor.soluteflux_Sr", attributes=(:field_data=>SrIsotopeType,)),
+        PB.VarContrib("solutefluxOceanfloor_Sr"=>"fluxOceanfloor.soluteflux_Sr", "mol yr-1", "Sr oceanfloor solute flux",
+            attributes=(:field_data=>SrIsotopeType,)),
        
-        PB.VarContrib("fluxOceanBurial_Sr",     "mol yr-1", "Sr ocean burial flux",
-            link_namestr="fluxOceanBurial.flux_Sr", attributes=(:field_data=>SrIsotopeType,)),
-        PB.VarDep("fluxOceanBurial_Ccarb",      "mol yr-1", "carbonate ocean burial flux",
-            link_namestr="fluxOceanBurial.flux_Ccarb"),
+        PB.VarContrib("fluxOceanBurial_Sr"=>"fluxOceanBurial.flux_Sr",   "mol yr-1", "Sr ocean burial flux",
+            attributes=(:field_data=>SrIsotopeType,)),
+        PB.VarDep("fluxOceanBurial_Ccarb"=>"fluxOceanBurial.flux_Ccarb", "mol yr-1", "carbonate ocean burial flux"),
            
         PB.VarDepScalar("ocean.Sr_norm",        "",         "normalized ocean Sr"),
         PB.VarDep("ocean.oceanfloor.Sr_delta",  "",         "ocean d87Sr"), 
