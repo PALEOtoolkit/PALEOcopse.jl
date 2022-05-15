@@ -272,9 +272,10 @@ function PB.register_methods!(rj::ReactionForce_LIPs)
     vars = [
         PB.VarDepScalar("tforce",     "yr",  "historical time at which to apply forcings, present = 0 yr"),
         PB.VarPropScalar("CFB_area",  "km^2",  "LIP continental flood basalt area"),
-        PB.VarPropScalar("LIP_CO2",  "mol yr-1",  "LIP CO2 release", attributes=(:field_data=>CIsotopeType,)),
-        PB.VarContribScalar("flux_C",  "mol yr-1",  "LIP CO2 release", 
-            link_namestr="fluxSedCrusttoAOcean.flux_C", attributes=(:field_data=>CIsotopeType,)),
+        PB.VarPropScalar("LIP_CO2",  "mol yr-1",  "LIP CO2 release",
+            attributes=(:field_data=>CIsotopeType,)),
+        PB.VarContribScalar("flux_C"=>"fluxSedCrusttoAOcean.flux_C",  "mol yr-1",  "LIP CO2 release", 
+            attributes=(:field_data=>CIsotopeType,)),
     ]
 
     
