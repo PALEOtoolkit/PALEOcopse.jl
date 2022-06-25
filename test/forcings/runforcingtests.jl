@@ -4,7 +4,7 @@ using NBInclude
 using Plots
 
 import PALEOboxes as PB
-
+import PALEOmodel
 import PALEOcopse
 
 @testset "Forcings" begin
@@ -27,7 +27,7 @@ import PALEOcopse
     # state and sms variables
     PB.allocate_variables!(model, modeldata, hostdep=true)
     @test PB.check_ready(model, modeldata) == true
-    PB.set_default_solver_view!(model, modeldata) # also (re)allocates tforce
+    PALEOmodel.set_default_solver_view!(model, modeldata) # also (re)allocates tforce
 
     modelcreated_vars_dict = Dict([(var.name, var) for var in PB.get_variables(global_domain, hostdep=false)])
 

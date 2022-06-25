@@ -2,6 +2,7 @@
 using Test
 
 import PALEOboxes as PB
+import PALEOmodel
 import PALEOcopse
 
 @testset "GlobalTemperature" begin
@@ -19,7 +20,7 @@ import PALEOcopse
     @test PB.check_ready(model, modeldata, throw_on_error=false) == false
     # allocate state and sms variables
     PB.allocate_variables!(model, modeldata, hostdep=true)   
-    PB.set_default_solver_view!(model, modeldata)
+    PALEOmodel.set_default_solver_view!(model, modeldata)
     @test PB.check_ready(model, modeldata) == true
 
     # get modelcreated variables
@@ -37,7 +38,7 @@ import PALEOcopse
     PB.dispatch_setup(model, :setup, modeldata)
     # Initialise state variables to norm_value
     PB.dispatch_setup(model, :norm_value, modeldata)
-    PB.copy_norm!(modeldata.solver_view_all)
+    PALEOmodel.copy_norm!(modeldata.solver_view_all)
     # Initialise state variables etc     
     PB.dispatch_setup(model, :initial_value, modeldata)
 
