@@ -229,21 +229,36 @@ function do_force_CPlandrelbergman2004(m::PB.ReactionMethod, (vars, ), cellrange
     return nothing
 end
 
+const LINEARINTERPOLATION_TEMPLATE = Interpolations.LinearInterpolation(
+    [0.0, 1.0], 
+    [NaN, NaN],
+    extrapolation_bc = Interpolations.Flat()
+)
 
 """
     ReactionForce_spreadsheet
 
-Generic forcing interpolated from values in spreadsheet. Spreadsheet should contain a table of numeric data in Sheet1,
-with a single header row, and time in Ma as the first column.
+Generic forcing interpolated from values in spreadsheet.
 
-Interpolates and optionally applies naive extrapolation of forcings into (constant) Precambrian and future
+Spreadsheet should contain a table of numeric data in sheet `sheetname`,
+with a single header row, and time in `timecolumn` and data in `datacolumn`.
+
+Time from `timecolumn` is multiplied by `timemultiplier` to convert to PALEO model time.
+
+Linearly interpolates in time `tforce` to set Variable `forcename`, and extrapolates into past and future, either to values
+in `extrap_value_past`, `extrap_value_future`, or to the closest spreadsheet value if these Parameters are `NaN`.
+
+# Implementation
+Spreadsheet data is read using the Julia XLSX and DataFrames packages with
+
+    xf = XLSX.readxlsx(forcingfile)
+    df = XLSX.eachtablerow(xf[sheetname]) |> DataFrames.DataFrame
 
 # Parameters
 $(PARS)
 
-# Methods and Variables TODO
-- `tforce` (yr) historical time at which to apply forcing
-- `<forcename>` name from Parameter `forcename`
+# Methods and Variables for default Parameters
+$(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionForce_spreadsheet{P} <:  PB.AbstractReaction
     base::PB.ReactionBase
@@ -251,79 +266,119 @@ Base.@kwdef mutable struct ReactionForce_spreadsheet{P} <:  PB.AbstractReaction
     pars::P = PB.ParametersTuple(
         PB.ParString("forcename", "FORCE",
             description="name of forcing (this will be a variable name in global Domain)"),
+        PB.ParString("datafolder", PALEOcopse.Forcings.srcdir(),
+            description="folder for spreadsheet with forcing data"),
         PB.ParString("datafile", "", 
-            description="spreadsheet with forcing data (path relative to $(PALEOcopse.Forcings.srcdir()))"),
+            description="spreadsheet with forcing data (path relative to 'datafolder')"),
+        PB.ParString("sheetname", "Sheet1",
+            description="sheet name in spreadsheet"),
         PB.ParInt("timecolumn", 1,
             description="column with time data"),
+        PB.ParDouble("timemultiplier", -1.0e6,
+            description="factor to multiply 'timecolumn' by to convert to yr after present day (so times in past are -ve)"),
         PB.ParInt("datacolumn", 2,
             description="column with forcing data"),
-        PB.ParDouble("extrap_value", 1.0, units="", 
-            description="extrapolate value for out-of-range tforce"),
+        PB.ParDouble("extrap_value_past", 1.0, units="", 
+            description="extrapolate value for tforce before earliest value in spreadsheet (NaN to use earliest value)"),
+        PB.ParDouble("extrap_value_future", 1.0, units="", 
+            description="extrapolate value for tforce after latest value in spreadsheet (NaN to use latest value"),
     )
 
     forcing_data    = DataFrames.DataFrame()  # raw data from spreadsheet
 
-    interp_FORCE = nothing
+    force_times::Vector{Float64} = Float64[] # times used for interpolation
+    force_values::Vector{Float64} = Float64[] # values used for interpolation
+    interp_FORCE::typeof(LINEARINTERPOLATION_TEMPLATE) = LINEARINTERPOLATION_TEMPLATE
     
-end
-
-function read_xlsx(forcingfile; sheetname="Sheet1")
-
-    @info "read_xlsx: spreadsheet $(forcingfile) sheet $(sheetname)"
-
-    xf = XLSX.readxlsx(forcingfile)
-    # read data assuming first row is column headers
-    # data, column_labels = XLSX.gettable(xf[sheetname])
-    # convert to float64 and create DataFrame
-    # data_float64 = [Float64.(d) for d in data]
-    # df = DataFrames.DataFrame(data_float64, column_labels)
-
-    # Read using built-in iterator - assumes single header row, automatic type conversion
-    df = XLSX.eachtablerow(xf[sheetname]) |> DataFrames.DataFrame
-
-    @info "read_xlsx read $(DataFrames.describe(df))"
-
-    return df
 end
 
 function PB.register_methods!(rj::ReactionForce_spreadsheet)
   
-    forcingfile = joinpath(PALEOcopse.Forcings.srcdir(), rj.pars.datafile.v)
-    @info "ReactionForce_spreadsheet: $(PB.fullname(rj)) loading $(rj.pars.forcename.v) forcing from datafile $(forcingfile)"
-    rj.forcing_data = read_xlsx(forcingfile)
-    @info "ReactionForce_spreadsheet:  $(PB.fullname(rj)) $(rj.pars.forcename.v) from column $(rj.pars.datacolumn.v) ($(names(rj.forcing_data)[rj.pars.datacolumn.v]))"
-    @info "ReactionForce_spreadsheet:  $(PB.fullname(rj)) extrapolating out-of-range tforce to $(rj.pars.forcename.v) = $(rj.pars.extrap_value.v)"
-    
-    # create interpolation object
-    rj.interp_FORCE = Interpolations.LinearInterpolation(
-        -1.0e6*rj.forcing_data[:, rj.pars.timecolumn.v],  Float64.(rj.forcing_data[:, rj.pars.datacolumn.v]), 
-        extrapolation_bc = rj.pars.extrap_value.v )  # fill out of range values
-
     var_tforce = PB.VarDepScalar("tforce",     "yr",  
         "historical time at which to apply forcings, present = 0 yr")
     var_FORCE = PB.VarPropScalar(rj.pars.forcename.v,    "",  
-        "forcing interpolated from $(forcingfile) column $(rj.pars.datacolumn.v)")
+        "forcing interpolated from spreadsheet")
+    PB.setfrozen!(rj.pars.forcename)
 
-    PB.setfrozen!.(PB.get_parameters(rj)) # no modification after spreadsheet read
+    PB.add_method_setup!(
+        rj, 
+        setup_force_spreadsheet,
+        (),
+    )
 
     PB.add_method_do!(
         rj, 
         do_force_spreadsheet,
         (PB.VarList_single(var_tforce), PB.VarList_single(var_FORCE)),
-        p=rj.interp_FORCE
+    )
+
+    return nothing
+end
+
+function setup_force_spreadsheet(m::PB.ReactionMethod, (), cellrange::PB.AbstractCellRange, attribute_name)
+    rj = m.reaction
+
+    attribute_name == :setup || return nothing
+
+    forcingfile = joinpath(rj.pars.datafolder.v, rj.pars.datafile.v)
+    @info "setup_force_spreadsheet ReactionForce_spreadsheet $(PB.fullname(rj)): "*
+        "loading $(rj.pars.forcename.v) forcing from 'datafolder/datafile'='$(forcingfile)'"
+    rj.forcing_data = _read_xlsx(forcingfile, sheetname=rj.pars.sheetname.v)
+
+    sp_times = rj.pars.timemultiplier.v*rj.forcing_data[:, rj.pars.timecolumn.v]
+    @info "    'tforce' from $(rj.pars.timemultiplier.v) * column $(rj.pars.timecolumn.v) ($(names(rj.forcing_data)[rj.pars.timecolumn.v]))"
+
+    sp_values = Float64.(rj.forcing_data[:, rj.pars.datacolumn.v])
+    @info "    '$(rj.pars.forcename.v)' from column $(rj.pars.datacolumn.v) ($(names(rj.forcing_data)[rj.pars.datacolumn.v]))"
+
+    # sort in ascending time order
+    sp_perm = sortperm(sp_times)
+    rj.force_times = sp_times[sp_perm]
+    rj.force_values = sp_values[sp_perm]
+
+    extrap_past = isnan(rj.pars.extrap_value_past.v) ? "earlist value in spreadsheet = $(first(rj.force_values))" : "'extrap_value_past' = $(rj.pars.extrap_value_past.v)"
+    @info "    extrapolating out-of-range tforce < $(first(rj.force_times)) (yr) to $extrap_past"
+    extrap_future = isnan(rj.pars.extrap_value_future.v) ? "latest value in spreadsheet = $(last(rj.force_values))" : "'extrap_value_future' = $(rj.pars.extrap_value_future.v)"
+    @info "    extrapolating out-of-range tforce > $(last(rj.force_times)) (yr) to $extrap_future"
+   
+    # create interpolation object
+    rj.interp_FORCE = Interpolations.LinearInterpolation(
+        rj.force_times, rj.force_values, 
+        extrapolation_bc = Interpolations.Flat() # only used for extrap_value_past, future == NaN
     )
 
     return nothing
 end
 
 function do_force_spreadsheet(m::PB.ReactionMethod, (var_tforce, var_FORCE), cellrange::PB.AbstractCellRange, deltat)
-    interp_FORCE = m.p
+    rj = m.reaction
 
     tforce = var_tforce[]
-    var_FORCE[] =  interp_FORCE(tforce)
+
+    if tforce < first(rj.force_times) && !isnan(rj.pars.extrap_value_past.v)
+        var_FORCE[] = rj.pars.extrap_value_past.v
+    elseif tforce > last(rj.force_times) && !isnan(rj.pars.extrap_value_future.v)
+        var_FORCE[] = rj.pars.extrap_value_future.v
+    else
+        # extrapolation_bc = Flat() will extrapolate to first/last constant value
+        var_FORCE[] =  rj.interp_FORCE(tforce)
+    end
     
     return nothing
 end
 
+function _read_xlsx(forcingfile; sheetname="Sheet1")
+
+    @info "    read_xlsx: spreadsheet $(forcingfile) sheet $(sheetname)"
+
+    xf = XLSX.readxlsx(forcingfile)
+
+    # Read using built-in iterator - assumes single header row, automatic type conversion
+    df = XLSX.eachtablerow(xf[sheetname]) |> DataFrames.DataFrame
+
+    @info "    read_xlsx read $(DataFrames.describe(df))"
+
+    return df
+end
 
 end # module
