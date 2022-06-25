@@ -88,13 +88,13 @@ read LIP data from spreadsheet
 """
 function read_lips_xlsx(lipfile)
 
-    @info "read_lips_xlsx: spreadsheet $(lipfile)"
+    @info "    read_lips_xlsx: spreadsheet $(lipfile)"
 
     xf = XLSX.readxlsx(lipfile)
     sh = xf["Sheet1"]
 
     column_names = sh["A1:I1"]
-    @info "read_lips_xlsx: column_names: $(column_names)"
+    @info "    read_lips_xlsx: column_names: $(column_names)"
     expected_column_names = ["Age" "Name" "Type" "Continental areas" "All volumes" "CO2 release (min)" "CO2 release (max)" "Degassing duration" "Present day area"]
     column_names == expected_column_names || error("spreadsheet column names don't match expected_column_names=", expected_column_names)
 
@@ -229,16 +229,17 @@ If Parameter `co2releasefield` != `NoCO2`, a CO2 pulse (duration 2e5yr, magnitud
 # Parameters
 $(PARS)
 
-# Methods and Variables
+# Methods and Variables for default Parameters
 $(METHODS_DO)
 """
 Base.@kwdef mutable struct ReactionForce_LIPs{P} <:  PB.AbstractReaction
     base::PB.ReactionBase
     
     pars::P = PB.ParametersTuple(
+        PB.ParString("datafolder", PALEOcopse.Forcings.srcdir(),
+            description="folder for forcing data 'datafile'"),
         PB.ParString("datafile", "CR_force_LIP_table.xlsx", 
-            description="spreadsheet with forcing data (path relative to $(PALEOcopse.Forcings.srcdir()))"),
-    
+            description="spreadsheet with forcing data (path relative to 'datafolder')"),    
         PB.ParDouble("present_day_CFB_area", 4.8e6, units="km^2", 
             description="present day continental flood basalt area"),
         PB.ParBool("smoothempl", false, 
@@ -260,14 +261,10 @@ end
 
 
 function PB.register_methods!(rj::ReactionForce_LIPs)
-  
-    lipfile = joinpath(PALEOcopse.Forcings.srcdir(), rj.pars.datafile.v)
-    @info "register_methods! ReactionForce_LIPs: $(PB.fullname(rj)) loading LIP forcing from datafile $(lipfile)"
-
-    rj.LIP_data = read_lips_xlsx(lipfile)
-   
+     
     CIsotopeType = rj.pars.CIsotope.v
-    @info "    CIsotopeType=$(CIsotopeType)"
+    PB.setfrozen!(rj.pars.CIsotope)
+    @info "register_methods! ReactionForce_LIPs: $(PB.fullname(rj)) CIsotopeType=$(CIsotopeType)"
 
     vars = [
         PB.VarDepScalar("tforce",     "yr",  "historical time at which to apply forcings, present = 0 yr"),
@@ -277,7 +274,6 @@ function PB.register_methods!(rj::ReactionForce_LIPs)
         PB.VarContribScalar("flux_C"=>"fluxSedCrusttoAOcean.flux_C",  "mol yr-1",  "LIP CO2 release", 
             attributes=(:field_data=>CIsotopeType,)),
     ]
-
     
     PB.add_method_setup!(
         rj,
@@ -295,16 +291,20 @@ function PB.register_methods!(rj::ReactionForce_LIPs)
     return nothing
 end
 
-function setup_force_LIPs(m::PB.ReactionMethod, (), cellrange::PB.AbstractCellRange, attribute_value)
+function setup_force_LIPs(m::PB.ReactionMethod, (), cellrange::PB.AbstractCellRange, attribute_name)
     rj = m.reaction
 
-    attribute_value == :initial_value || return nothing
+    attribute_name == :setup || return nothing
+
+    lipfile = joinpath(rj.pars.datafolder.v, rj.pars.datafile.v)
+    @info "setup_force_LIPs! ReactionForce_LIPs: $(PB.fullname(rj)) loading LIP forcing from 'datafolder/datafile'='$(lipfile)'"
+
+    rj.LIP_data = read_lips_xlsx(lipfile)
 
     lipkwargs = (smoothempl=rj.pars.smoothempl.v, )
 
     rj.default_lambda = find_default_lambda(rj.pars.present_day_CFB_area.v, rj.LIP_data, lipkwargs )
 
-    @info "ReactionForce_LIPs.setup_force_LIPs $(PB.fullname(rj))"
     @info "    found default_lambda=$(rj.default_lambda) "*
         "to match present_day_CFB_area = $(rj.pars.present_day_CFB_area.v) km^2"
  

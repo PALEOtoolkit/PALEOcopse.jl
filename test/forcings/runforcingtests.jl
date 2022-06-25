@@ -34,7 +34,7 @@ import PALEOcopse
     PB.initialize_reactiondata!(model, modeldata)    
       
     @info "dispatch_setup"
-    PB.dispatch_setup(model, :initial_value, modeldata)
+    PB.dispatch_setup(model, :setup, modeldata)
    
     dispatchlists = modeldata.dispatchlists_all
  

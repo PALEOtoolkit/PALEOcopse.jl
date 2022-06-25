@@ -33,6 +33,8 @@ import PALEOcopse
  
     # check Reaction configuration
     PB.check_configuration(model)
+    # Initialise Reactions and non-state variables
+    PB.dispatch_setup(model, :setup, modeldata)
     # Initialise state variables to norm_value
     PB.dispatch_setup(model, :norm_value, modeldata)
     PB.copy_norm!(modeldata.solver_view_all)

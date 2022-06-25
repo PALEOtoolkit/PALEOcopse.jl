@@ -60,7 +60,7 @@ end
 function PB.register_methods!(rj::ReactionSeafloorWeathering)
 
     CIsotopeType = rj.pars.CIsotope.v
-
+    PB.setfrozen!(rj.pars.CIsotope)
     vars = [
         PB.VarDep("global.RHOSFW",          "", "seafloor weathering-specific additional forcing (usually 1.0)"),
         PB.VarDep("(global.TEMP)",          "K", "global mean temperature"),
@@ -208,10 +208,12 @@ function set_distributionfromdepths(
     m::PB.ReactionMethod, 
     (vars, ), 
     cellrange::PB.AbstractCellRange, 
-    attribute_value
+    attribute_name
 )
     rj = m.reaction
-    attribute_value == :initial_value || return nothing
+    attribute_name == :setup || return nothing
+
+    @info "$(fullname(m)) ReactionSeafloorWeathering:"
 
     PB.get_length(rj.domain) == length(cellrange.indices) || 
         error("ReactionSeafloorWeathering $(PB.fullname(rj)) set_distributionfromdepths cellrange does not cover whole Domain")
@@ -230,8 +232,7 @@ function set_distributionfromdepths(
     
     normsum = sum(sfw_distribution)
     Atot = sum(vars.Afloor)
-    @info "ReactionSeafloorWeathering $(PB.fullname(rj)) "*
-        "sfw distributed among $nsfw of $(length(sfw_distribution)) boxes, area $normsum m^2 of $Atot m^2"
+    @info "    sfw distributed among $nsfw of $(length(sfw_distribution)) boxes, area $normsum m^2 of $Atot m^2"
     PB.setvalue!(rj.pars.sfw_distribution, sfw_distribution./normsum)
 
     return nothing
