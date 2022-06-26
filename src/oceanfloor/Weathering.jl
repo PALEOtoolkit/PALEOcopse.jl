@@ -213,7 +213,7 @@ function set_distributionfromdepths(
     rj = m.reaction
     attribute_name == :setup || return nothing
 
-    @info "$(fullname(m)) ReactionSeafloorWeathering:"
+    @info "$(PB.fullname(m)) ReactionSeafloorWeathering:"
 
     PB.get_length(rj.domain) == length(cellrange.indices) || 
         error("ReactionSeafloorWeathering $(PB.fullname(rj)) set_distributionfromdepths cellrange does not cover whole Domain")
