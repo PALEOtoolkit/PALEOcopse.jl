@@ -1,7 +1,7 @@
 name = "PALEOcopse"
 uuid = "4a6ed817-0e58-48c6-8452-9e9afc8cb508"
 authors = ["sd336 "]
-version = "0.3.0"
+version = "0.3.1"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -20,7 +20,7 @@ Infiltrator = "1.0"
 Interpolations = "0.13"
 MAT = "0.10"
 PALEOboxes = "0.19.1"
-PALEOmodel = "0.15"
+PALEOmodel = "0.15.1"
 Plots = "1.0"
 Roots = "1.0, 2.0"
 TestEnv = "1.0"
