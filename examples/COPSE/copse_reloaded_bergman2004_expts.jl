@@ -50,15 +50,16 @@ function copse_reloaded_bergman2004_expts(
 
         elseif  expt == "VCI"
             # Fig.12 magenta
-            PB.setvalue!(PB.get_reaction(model, "ocean", "ocean_copse").pars.f_CPsea, "VCI")
+            PB.setvalue!(PB.get_reaction(model, "ocean", "oceanburial_copse").pars.f_CPsea, "VCI")
 
         elseif  expt == "mocbProdLinear"
             # not shown in paper - mocb linearly proportional to new production
-            PB.setvalue!(PB.get_reaction(model, "ocean", "ocean_copse").pars.f_mocb_b, 1.0)
+            PB.setvalue!(PB.get_reaction(model, "ocean", "oceanburial_copse").pars.f_mocb_b, 1.0)
 
         elseif  expt == "noNcycle"
             # not shown in paper
-            PB.setvalue!(PB.get_reaction(model, "ocean", "ocean_copse").pars.f_ncycle, false)
+            PB.setvalue!(PB.get_reaction(model, "ocean", "marinebiota_copse").pars.f_ncycle, false)
+            PB.setvalue!(PB.get_reaction(model, "ocean", "oceanburial_copse").pars.f_ncycle, false)
 
         elseif length(expt) == 5 && expt[1] == "setpar"
             # generic parameter set (setpar, <domain>, <reaction>, <parname>, <parvalue)
@@ -90,7 +91,7 @@ function copse_reloaded_bergman2004_expts(
     end
 
     # set parameters for steady-state
-    rct_ocean   = PB.get_reaction(model, "ocean", "ocean_copse")
+    rct_ocean   = PB.get_reaction(model, "ocean", "oceanburial_copse")
     mtotpb      = rct_ocean.pars.k2_mocb.v/rct_ocean.pars.CPsea0.v  +rct_ocean.pars.k7_capb.v +rct_ocean.pars.k6_fepb.v
     rct_degass  = PB.get_reaction(model, "sedcrust", "sedcrust_copse")
     

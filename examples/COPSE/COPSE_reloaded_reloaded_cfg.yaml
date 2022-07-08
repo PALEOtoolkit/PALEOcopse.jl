@@ -568,19 +568,11 @@ model1:
                         R:initial_value:        1.2e17
                         R:initial_delta:        0.708   # reasonable average value for Phanerozoic
 
-                ocean_copse:
-                    class: ReactionOceanCOPSE
-                    variable_links:                        
-                        DIC_sms: atmocean.A_sms                        
-                        DIC_delta: DIC_delta # provided by CIsotopes
-                        # DIC*: atmocean.A # dont do this !!! (overwrites DIC_delta with atmocean.A_delta)
-                        O*: atmocean.O*
-                        CAL_norm: global.CAL_NORM   # [Ca] from forcing
+                marinebiota_copse:
+                    class: ReactionMarineBiotaCOPSE
                     parameters:
                         newp0:                  225.956
-                        CNsea0:                 37.5
-                        CPsea0:                 250.0
-
+                       
                         f_anoxia:               newanoxia
                         k_logistic:             12.0
                         k_uptake:               0.5
@@ -590,6 +582,19 @@ model1:
                         f_denit:                new
                         k3_nfix:                8.667e12
                         k4_denit:               4.3e12
+
+                oceanburial_copse:
+                    class: ReactionOceanBurialCOPSE
+                    variable_links:                        
+                        DIC_sms: atmocean.A_sms                        
+                        DIC_delta: DIC_delta # provided by CIsotopes
+                        # DIC*: atmocean.A # dont do this !!! (overwrites DIC_delta with atmocean.A_delta)
+                        O: atmocean.O       # relink O, O_*, NOT OX*
+                        O_*: atmocean.O_*
+                        CAL_norm: global.CAL_NORM   # [Ca] from forcing
+                    parameters:
+                        CNsea0:                 37.5
+                        CPsea0:                 250.0
 
                         f_mocb:                 original
                         f_mocb_b:               2.0
@@ -616,6 +621,11 @@ model1:
             
 
             reactions:
+                carbburial: 
+                    class: ReactionCarbBurialAlk
+                    variable_links:                        
+                        DIC_sms: atmocean.A_sms
+
                 sfw:
                     class: ReactionSeafloorWeathering
                     parameters:
