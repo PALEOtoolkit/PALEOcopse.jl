@@ -445,8 +445,11 @@ model1:
                         R:initial_value:        4e19
                         R:initial_delta:        20.0  # per mil
 
-                ocean_copse:
-                    class: ReactionOceanCOPSE
+                marinebiota_copse:
+                    class: ReactionMarineBiotaCOPSE
+
+                oceanburial_copse:
+                    class: ReactionOceanBurialCOPSE
                     parameters:
                         # Marine organic carbon burial
                         f_mocb                  : 'original'        # COPSE Bergman (2004) functional form
@@ -478,10 +481,15 @@ model1:
                         DIC_delta: DIC_delta # provided by CIsotopes
                         # DIC*: atmocean.A # dont do this !!! (overwrites DIC_delta with atmocean.A_delta)
                         # Route O -> atmocean.O
-                        O*: atmocean.O*
+                        O: atmocean.O   # O, O_*, but NOT OX*
+                        O_*: atmocean.O_*
 
         oceanfloor:
-
+            reactions:
+                carbburial: 
+                    class: ReactionCarbBurialAlk
+                    variable_links:                        
+                        DIC_sms: atmocean.A_sms
             
 
         oceansurface:

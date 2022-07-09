@@ -55,15 +55,16 @@ function copse_reloaded_reloaded_expts(
 
         elseif  expt == "VCI"
             # Fig.12 magenta
-            PB.set_parameter_value!(model, "ocean", "ocean_copse", "f_CPsea", "VCI")
+            PB.set_parameter_value!(model, "ocean", "oceanburial_copse", "f_CPsea", "VCI")
 
         elseif  expt == "mocbProdLinear"
             # not shown in paper - mocb linearly proportional to new production
-            PB.set_parameter_value!(model, "ocean", "ocean_copse", "f_mocb_b", 1.0)
+            PB.set_parameter_value!(model, "ocean", "oceanburial_copse", "f_mocb_b", 1.0)
 
         elseif  expt == "noNcycle"
             # not shown in paper
-            PB.set_parameter_value!(model, "ocean", "ocean_copse", "f_ncycle", false)
+            PB.set_parameter_value!(model, "ocean", "marinebiota_copse", "f_ncycle", false)
+            PB.set_parameter_value!(model, "ocean", "oceanburial_copse", "f_ncycle", false)
 
         elseif length(expt) == 5 && expt[1] == "setpar"
             # generic parameter set (setpar, <domain>, <reaction>, <parname>, <parvalue)
@@ -92,7 +93,7 @@ function copse_reloaded_reloaded_expts(
     end
 
     # set parameters for carbonate-silicate weathering steady-state
-    rct_ocean       = PB.get_reaction(model, "ocean", "ocean_copse")
+    rct_ocean       = PB.get_reaction(model, "ocean", "oceanburial_copse")
     mtotpb = rct_ocean.pars.k2_mocb.v/rct_ocean.pars.CPsea0.v  +rct_ocean.pars.k7_capb.v +rct_ocean.pars.k6_fepb.v
     rct_degass      = PB.get_reaction(model, "sedcrust", "sedcrust_copse")
     rct_sfw         = PB.get_reaction(model, "oceanfloor", "sfw")

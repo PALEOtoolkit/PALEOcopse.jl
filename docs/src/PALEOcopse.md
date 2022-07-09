@@ -68,7 +68,8 @@ CurrentModule = PALEOcopse.Ocean
 ```
 
 ```@docs
-OceanCOPSE.ReactionOceanCOPSE
+OceanCOPSE.ReactionMarineBiotaCOPSE
+OceanCOPSE.ReactionOceanBurialCOPSE
 ```
 
 ## Ocean floor
@@ -76,8 +77,8 @@ OceanCOPSE.ReactionOceanCOPSE
 CurrentModule = PALEOcopse.Oceanfloor
 ```
 
-### Seafloor weathering
 ```@docs
+CarbBurial.ReactionCarbBurialAlk
 Weathering.ReactionSeafloorWeathering
 ```
 
