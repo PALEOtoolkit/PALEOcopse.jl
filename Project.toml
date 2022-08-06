@@ -1,7 +1,7 @@
 name = "PALEOcopse"
 uuid = "4a6ed817-0e58-48c6-8452-9e9afc8cb508"
 authors = ["sd336 "]
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
