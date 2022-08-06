@@ -51,7 +51,7 @@ import PALEOcopse
     end
     end
 
-    PB.set_tforce!(modeldata.solver_view_all, 0.0)
+    PALEOmodel.set_tforce!(modeldata.solver_view_all, 0.0)
     PB.do_deriv(dispatchlists)
 
     @test PB.get_data(modelcreated_vars_dict["SOLAR"], modeldata)[] == 1368.0
