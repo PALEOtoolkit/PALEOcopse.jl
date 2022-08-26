@@ -63,9 +63,9 @@ end
 function PB.register_methods!(rj::ReactionSedCrustCOPSE)
 
     # isotope Types
-    CIsotopeType = rj.pars.CIsotope.v
-    if rj.pars.enableS.v
-        SIsotopeType = rj.pars.SIsotope.v
+    CIsotopeType = rj.pars.CIsotope[]
+    if rj.pars.enableS[]
+        SIsotopeType = rj.pars.SIsotope[]
     else
         SIsotopeType = PB.ScalarData
     end
@@ -75,7 +75,7 @@ function PB.register_methods!(rj::ReactionSedCrustCOPSE)
         ("C::$CIsotopeType",          "mol C",    "Sedimentary carbonate"),
         ("G::$CIsotopeType",          "mol C",    "Sedimentary organic carbon"),
     ]
-    if rj.pars.enableS.v
+    if rj.pars.enableS[]
         push!(state_varnames,
             ("GYP::$SIsotopeType",        "mol S",    "Sedimentary gypsum"),
             ("PYR::$SIsotopeType",        "mol S",    "Sedimentary pyrite"),
@@ -102,7 +102,7 @@ function PB.register_methods!(rj::ReactionSedCrustCOPSE)
         ("ccdeg",   "molC/yr",    "Carbonate degassing"),
         ("ocdeg",   "molC/yr",    "Organic carbon degassing"),
     ]
-    if rj.pars.enableS.v
+    if rj.pars.enableS[]
         push!(prop_varnames,
             ("gypdeg",  "molS/yr",    "Gypsum degassing"),
             ("pyrdeg",  "molS/yr",    "Pyrite degassing"),
@@ -111,7 +111,7 @@ function PB.register_methods!(rj::ReactionSedCrustCOPSE)
     vars_prop = PB.VarVector(PB.VarPropScalar, prop_varnames)
 
     aocean_fluxnames = ["C::$CIsotopeType", "Redox"]
-    if rj.pars.enableS.v
+    if rj.pars.enableS[]
         push!(aocean_fluxnames, "S::$SIsotopeType")
     end
     fluxSedCrusttoAOcean = PB.Fluxes.FluxContribScalar(
@@ -136,30 +136,31 @@ end
 
 function do_sed_crust_COPSE(
     m::PB.ReactionMethod,
+    pars,
     (fluxSedCrusttoAOcean, S, D),
     cellrange::PB.AbstractCellRange,
     deltat
 )
-    pars = m.reaction.pars
+
     (CIsotopeType, SIsotopeType) = m.p
     
     #%%%%%%%% calculate degassing
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     #  Inorganic carbon
-    D.ccdeg[]  = pars.k12_ccdeg.v*D.DEGASS[]*D.C_norm[]*D.Bforcing[]
+    D.ccdeg[]  = pars.k12_ccdeg[]*D.DEGASS[]*D.C_norm[]*D.Bforcing[]
     ccdeg_isotope = @PB.isotope_totaldelta(CIsotopeType, D.ccdeg[], D.C_delta[])   
 
     # Organic carbon
-    ocdeg_raw = pars.k13_ocdeg.v*D.DEGASS[]*D.G_norm[]
-    if pars.f_ocdeg.v == "O2indep"
+    ocdeg_raw = pars.k13_ocdeg[]*D.DEGASS[]*D.G_norm[]
+    if pars.f_ocdeg[] == "O2indep"
         D.ocdeg[] = ocdeg_raw
-    elseif pars.f_ocdeg.v == "O2copsecrashprevent"
+    elseif pars.f_ocdeg[] == "O2copsecrashprevent"
         # COPSE 5_14 does this (always) apparently to prevent pO2 dropping to zero ?
         # This has a big effect when pO2 dependence of oxidative weathering switched off
         D.ocdeg[] = ocdeg_raw*PALEOcopse.COPSE.copse_crash(D.pO2PAL[], "ocdeg", D.tforce[])
     else
-        error("unrecogized pars.f_ocdeg ", pars.f_ocdeg.v)
+        error("unrecogized pars.f_ocdeg ", pars.f_ocdeg[])
     end
     
     ocdeg_isotope = @PB.isotope_totaldelta(CIsotopeType, D.ocdeg[], D.G_delta[])
@@ -172,10 +173,10 @@ function do_sed_crust_COPSE(
     # oxidant flux to AOcean
     fluxSedCrusttoAOcean.Redox[] += -D.ocdeg[]
 
-    if pars.enableS.v
+    if pars.enableS[]
         # Sulphur
-        D.pyrdeg[] = pars.k_pyrdeg.v*D.PYR_norm[]*D.DEGASS[]
-        D.gypdeg[] = pars.k_gypdeg.v*D.GYP_norm[]*D.DEGASS[]
+        D.pyrdeg[] = pars.k_pyrdeg[]*D.PYR_norm[]*D.DEGASS[]
+        D.gypdeg[] = pars.k_gypdeg[]*D.GYP_norm[]*D.DEGASS[]
         pyrdeg_isotope = @PB.isotope_totaldelta(SIsotopeType, D.pyrdeg[], D.PYR_delta[])
         gypdeg_isotope = @PB.isotope_totaldelta(SIsotopeType, D.gypdeg[], D.GYP_delta[])
     

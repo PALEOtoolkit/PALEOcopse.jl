@@ -262,7 +262,7 @@ end
 
 function PB.register_methods!(rj::ReactionForce_LIPs)
      
-    CIsotopeType = rj.pars.CIsotope.v
+    CIsotopeType = rj.pars.CIsotope[]
     PB.setfrozen!(rj.pars.CIsotope)
     @info "register_methods! ReactionForce_LIPs: $(PB.fullname(rj)) CIsotopeType=$(CIsotopeType)"
 
@@ -291,25 +291,25 @@ function PB.register_methods!(rj::ReactionForce_LIPs)
     return nothing
 end
 
-function setup_force_LIPs(m::PB.ReactionMethod, (), cellrange::PB.AbstractCellRange, attribute_name)
+function setup_force_LIPs(m::PB.ReactionMethod, pars, (), cellrange::PB.AbstractCellRange, attribute_name)
     rj = m.reaction
 
     attribute_name == :setup || return nothing
 
-    lipfile = joinpath(rj.pars.datafolder.v, rj.pars.datafile.v)
+    lipfile = joinpath(pars.datafolder[], pars.datafile[])
     @info "setup_force_LIPs! ReactionForce_LIPs: $(PB.fullname(rj)) loading LIP forcing from 'datafolder/datafile'='$(lipfile)'"
 
     rj.LIP_data = read_lips_xlsx(lipfile)
 
-    lipkwargs = (smoothempl=rj.pars.smoothempl.v, )
+    lipkwargs = (smoothempl=pars.smoothempl[], )
 
-    rj.default_lambda = find_default_lambda(rj.pars.present_day_CFB_area.v, rj.LIP_data, lipkwargs )
+    rj.default_lambda = find_default_lambda(pars.present_day_CFB_area[], rj.LIP_data, lipkwargs )
 
     @info "    found default_lambda=$(rj.default_lambda) "*
-        "to match present_day_CFB_area = $(rj.pars.present_day_CFB_area.v) km^2"
+        "to match present_day_CFB_area = $(pars.present_day_CFB_area[]) km^2"
  
-    co2releasefield = Symbol(rj.pars.co2releasefield.v)
-    @info "    add LIP CO2 release from $(rj.pars.co2releasefield.v) field"
+    co2releasefield = Symbol(pars.co2releasefield[])
+    @info "    add LIP CO2 release from $(pars.co2releasefield[]) field"
 
     empty!(rj.LIPs)
     rj.LIPs = create_LIPs(rj.LIP_data, co2releasefield, rj.default_lambda; lipkwargs...)

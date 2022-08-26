@@ -37,9 +37,7 @@ function copse_bergman2004_bergman2004_expts(
     copsemodel = PB.get_reaction(global_domain, "model_Bergman2004")
     PALEOcopse.COPSE.ModelBergman2004.set_parameters_modern_steady_state(copsemodel)
 
-    run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
-
-    return run
+    return model
 end
 
 

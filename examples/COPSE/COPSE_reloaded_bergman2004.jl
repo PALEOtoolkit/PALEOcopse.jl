@@ -27,7 +27,7 @@ global_logger(ConsoleLogger(stderr,Logging.Info))
 # comparemodel = CompareOutput.copse_output_load("bergman2004","")
 # comparemodel = CompareOutput.copse_output_load("reloaded","original_baseline")
 comparemodel = nothing
-run = copse_reloaded_bergman2004_expts(
+model = copse_reloaded_bergman2004_expts(
     "bergman2004",
     ["baseline"],
 )
@@ -35,7 +35,7 @@ tspan=(-1000e6, 0)
 
 # No S cycle
 # comparemodel = CompareOutput.copse_output_load("reloaded","original_baseline")
-# run = copse_reloaded_bergman2004_expts(
+# model = copse_reloaded_bergman2004_expts(
 #     "bergman2004noS", 
 #     ["baseline"],
 #     comparemodel=comparemodel,
@@ -46,7 +46,7 @@ tspan=(-1000e6, 0)
 
 # Modern steady-state (constant forcings) with CO2 pulse
 # comparemodel=nothing
-# run = copse_reloaded_bergman2004_expts(
+# model = copse_reloaded_bergman2004_expts(
 #     "bergman2004", 
 #     [
 #         ("tforce_constant", 0.0),
@@ -62,15 +62,18 @@ tspan=(-1000e6, 0)
 # )
 # tspan=(-10e6, 10e6)
 
-initial_state, modeldata = PALEOmodel.initialize!(run)
+initial_state, modeldata = PALEOmodel.initialize!(model)
 
 # call ODE function to check derivative
 initial_deriv = similar(initial_state)
-PALEOmodel.ODE.ModelODE(modeldata)(initial_deriv, initial_state , (run=run, modeldata=modeldata), 0.0)
+PALEOmodel.SolverFunctions.ModelODE(modeldata)(initial_deriv, initial_state , nothing, 0.0)
 println("initial_state", initial_state)
 println("initial_deriv", initial_deriv)
 
 println("integrate, no jacobian")
+                                          
+run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
+
 # NB first run includes JIT time
 @time PALEOmodel.ODE.integrate(
     run, initial_state, modeldata, tspan,

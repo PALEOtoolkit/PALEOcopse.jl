@@ -77,27 +77,28 @@ end
 function d87Sr_tyr(rj::ReactionSrMantleCrust, d87Sr_present, tyr)
 
     # calculate Rb to Sr ratio at present day required to give d87Sr_present
-    RbSr = (d87Sr_present - rj.pars.Sr_delta_0.v) / 
-                (1.0 - exp(-rj.pars.lambda_Rb.v*PB.Constants.age_present_yr))
+    RbSr = (d87Sr_present - rj.pars.Sr_delta_0[]) / 
+                (1.0 - exp(-rj.pars.lambda_Rb[]*PB.Constants.age_present_yr))
 
     tforwards = PB.Constants.age_present_yr + tyr # get time since formation of Earth at tyr
 
-    d87Sr   = rj.pars.Sr_delta_0.v + RbSr*(1.0 - exp(-rj.pars.lambda_Rb.v*tforwards))
+    d87Sr   = rj.pars.Sr_delta_0[] + RbSr*(1.0 - exp(-rj.pars.lambda_Rb[]*tforwards))
 
     return d87Sr
 end
 
 function do_Sr_mantle_crust(
     m::PB.ReactionMethod,
+    pars,
     (vars, ),
     cellrange::PB.AbstractCellRange,
     deltat
 )
     rj = m.reaction
 
-    vars.Sr_old_ig_delta[] = d87Sr_tyr(rj, rj.pars.Sr_old_ig_delta_present.v, vars.tforce[])
-    vars.Sr_new_ig_delta[] = d87Sr_tyr(rj, rj.pars.Sr_new_ig_delta_present.v, vars.tforce[])
-    vars.Sr_mantle_delta[] = d87Sr_tyr(rj, rj.pars.Sr_mantle_delta_present.v, vars.tforce[])
+    vars.Sr_old_ig_delta[] = d87Sr_tyr(rj, pars.Sr_old_ig_delta_present[], vars.tforce[])
+    vars.Sr_new_ig_delta[] = d87Sr_tyr(rj, pars.Sr_new_ig_delta_present[], vars.tforce[])
+    vars.Sr_mantle_delta[] = d87Sr_tyr(rj, pars.Sr_mantle_delta_present[], vars.tforce[])
 
     return nothing
 end
@@ -137,7 +138,7 @@ Base.@kwdef mutable struct ReactionSrSed{P} <: PB.AbstractReaction
 end
 
 function PB.register_methods!(rj::ReactionSrSed)
-    SrIsotopeType = rj.pars.SrIsotope.v
+    SrIsotopeType = rj.pars.SrIsotope[]
 
     vars = [
         PB.VarDepScalar("global.tforce", "yr",  "historical time at which to apply forcings, present = 0 yr"),
@@ -162,22 +163,22 @@ end
 
 function do_Sr_sed(
     m::PB.ReactionMethod,
+    pars,
     (vars, ),
     cellrange::PB.AbstractCellRange,
     deltat
 )
-    rj = m.reaction
     SrIsotopeType = m.p
 
     # metamorphic loss from sedimentary reservoir
-    if rj.pars.f_Sr_metam.v == "original"
+    if pars.f_Sr_metam[] == "original"
         # mol yr-1
-        Sr_metam = rj.pars.k_Sr_metam.v * vars.DEGASS[]        
-    elseif rj.pars.f_Sr_metam.v == "alternative"
+        Sr_metam = pars.k_Sr_metam[] * vars.DEGASS[]        
+    elseif pars.f_Sr_metam[] == "alternative"
         # mol yr-1
-        Sr_metam = rj.pars.k_Sr_metam.v * vars.DEGASS[] * vars.Sr_sed_norm[]
+        Sr_metam = pars.k_Sr_metam[] * vars.DEGASS[] * vars.Sr_sed_norm[]
     else
-        error("unknown f_Sr_metam $(rj.pars.f_Sr_metam.v)")
+        error("unknown f_Sr_metam $(pars.f_Sr_metam[])")
     end
     
     vars.Sr_sed_sms[] -= @PB.isotope_totaldelta(SrIsotopeType, Sr_metam, vars.Sr_sed_delta[]) 
@@ -186,9 +187,9 @@ function do_Sr_sed(
     # Simplified code for time-evolution of Sr_sed due to Rb decay
 
     # Sediment Rb content (include a very small secular decrease in Rb abundance for consistency, ~+1.4% at 1 Ga relative to present)
-    Rb_sed = PB.get_total(vars.Sr_sed[])*rj.pars.sediment_RbSr.v*exp(rj.pars.lambda_Rb.v*(-vars.tforce[]))
+    Rb_sed = PB.get_total(vars.Sr_sed[])*pars.sediment_RbSr[]*exp(pars.lambda_Rb[]*(-vars.tforce[]))
     # Rb decay to 87Sr
-    d87Sr_sed_dt_Rb = Rb_sed*rj.pars.lambda_Rb.v
+    d87Sr_sed_dt_Rb = Rb_sed*pars.lambda_Rb[]
     # NB: we are (ab)using IsotopeLinear to store a linearisation of 87Sr/86Sr,
     # so use a difference to add just 87Sr ie a flux with total=0, moldelta=d87Sr_sed_dt_Rb
     Sr_sed_dt_Rb = @PB.isotope_totaldelta(SrIsotopeType, d87Sr_sed_dt_Rb, 1.0) - @PB.isotope_totaldelta(SrIsotopeType, d87Sr_sed_dt_Rb, 0.0)
@@ -234,7 +235,7 @@ end
 
 
 function PB.register_methods!(rj::ReactionSrLand)
-    SrIsotopeType = rj.pars.SrIsotope.v
+    SrIsotopeType = rj.pars.SrIsotope[]
 
     vars = [
         PB.VarDepScalar("basw_relative", "",  "Basalt weathering normalized to present"),
@@ -265,28 +266,28 @@ end
 
 function do_Sr_land(
     m::PB.ReactionMethod,
+    pars,
     (vars, ),
     cellrange::PB.AbstractCellRange,
     deltat
 )
-    rj = m.reaction
     SrIsotopeType = m.p
 
     # Sr weathering flux from new igneous rocks
-    Sr_new_igw = @PB.isotope_totaldelta(SrIsotopeType, rj.pars.k_Sr_basw.v * vars.basw_relative[], vars.Sr_new_ig_delta[])
+    Sr_new_igw = @PB.isotope_totaldelta(SrIsotopeType, pars.k_Sr_basw[] * vars.basw_relative[], vars.Sr_new_ig_delta[])
 
     # Sr weathering flux from old igneous rocks
-    Sr_old_igw = @PB.isotope_totaldelta(SrIsotopeType, rj.pars.k_Sr_granw.v * vars.granw_relative[], vars.Sr_old_ig_delta[])
+    Sr_old_igw = @PB.isotope_totaldelta(SrIsotopeType, pars.k_Sr_granw[] * vars.granw_relative[], vars.Sr_old_ig_delta[])
 
     # Sr weathering from sedimentary reservoir
-    if rj.pars.f_Sr_sedw.v == "original"
+    if pars.f_Sr_sedw[] == "original"
         # mol yr-1
-        Sr_sedw_tot = rj.pars.k_Sr_sedw.v * vars.carbw_relative[]        
-    elseif rj.pars.f_Sr_sedw.v == "alternative"
+        Sr_sedw_tot = pars.k_Sr_sedw[] * vars.carbw_relative[]        
+    elseif pars.f_Sr_sedw[] == "alternative"
         # mol yr-1
-        Sr_sedw_tot = rj.pars.k_Sr_sedw.v * vars.carbw_relative[] * vars.Sr_sed_norm[]
+        Sr_sedw_tot = pars.k_Sr_sedw[] * vars.carbw_relative[] * vars.Sr_sed_norm[]
     else
-        error("unknown f_Sr_sedw $(rj.pars.f_Sr_sedw.v)")
+        error("unknown f_Sr_sedw $(pars.f_Sr_sedw[])")
     end    
     Sr_sedw = @PB.isotope_totaldelta(SrIsotopeType, Sr_sedw_tot, vars.Sr_sed_delta[]) 
 
@@ -338,7 +339,7 @@ end
 
 
 function PB.register_methods!(rj::ReactionSrOceanfloor)
-    SrIsotopeType = rj.pars.SrIsotope.v
+    SrIsotopeType = rj.pars.SrIsotope[]
 
     vars = [
         PB.VarDepScalar("global.DEGASS",        "",         "normalized DEGASS forcing"),
@@ -369,6 +370,7 @@ end
 
 function do_Sr_oceanfloor(
     m::PB.ReactionMethod,
+    pars,
     (vars, ),
     cellrange::PB.AbstractCellRange,
     deltat
@@ -379,32 +381,32 @@ function do_Sr_oceanfloor(
     r_nfloorcells = 1.0/PB.get_length(rj.domain) # fraction of flux for each oceanfloor cell
 
     # Sr mantle (hydrothermal) input  
-    Sr_mantle_total = @PB.isotope_totaldelta(SrIsotopeType, rj.pars.k_Sr_mantle.v * vars.DEGASS[], vars.Sr_mantle_delta[])
+    Sr_mantle_total = @PB.isotope_totaldelta(SrIsotopeType, pars.k_Sr_mantle[] * vars.DEGASS[], vars.Sr_mantle_delta[])
     @inbounds for i in cellrange.indices
         vars.solutefluxOceanfloor_Sr[i] += r_nfloorcells*Sr_mantle_total
     end
 
     # Sr seafloor weathering output
-    Sr_sfw_total = rj.pars.k_Sr_sfw.v * vars.sfw_relative[] * vars.Sr_norm[]
+    Sr_sfw_total = pars.k_Sr_sfw[] * vars.sfw_relative[] * vars.Sr_norm[]
     # @Infiltrator.infiltrate
     @inbounds for i in cellrange.indices
         vars.solutefluxOceanfloor_Sr[i] -= r_nfloorcells*@PB.isotope_totaldelta(SrIsotopeType, Sr_sfw_total, vars.Sr_delta[i])
     end
 
     # Sr burial
-    if rj.pars.f_Sr_sedb.v == "silwcarbw"
+    if pars.f_Sr_sedb[] == "silwcarbw"
         # COPSE formulation: assumes mccb ~ silw + carbw
         # mol yr-1
-        Sr_sedb_total = rj.pars.k_Sr_sedb.v * vars.silwcarbw_relative[] * vars.Sr_norm[]
+        Sr_sedb_total = pars.k_Sr_sedb[] * vars.silwcarbw_relative[] * vars.Sr_norm[]
         @inbounds for i in cellrange.indices
             Sr_sedb = r_nfloorcells*@PB.isotope_totaldelta(SrIsotopeType, Sr_sedb_total, vars.Sr_delta[i])
             vars.solutefluxOceanfloor_Sr[i] -= Sr_sedb
             vars.fluxOceanBurial_Sr[i]      += Sr_sedb
         end   
-    elseif rj.pars.f_Sr_sedb.v == "carbburial"
+    elseif pars.f_Sr_sedb[] == "carbburial"
         # Proportional to actual carbonate burial rate
         # mol mol-1
-        SrCarbRatio = rj.pars.k_Sr_sedb.v/rj.pars.k_mccb_0.v * vars.Sr_norm[]
+        SrCarbRatio = pars.k_Sr_sedb[]/pars.k_mccb_0[] * vars.Sr_norm[]
         @inbounds for i in cellrange.indices
             Sr_sedb = r_nfloorcells*@PB.isotope_totaldelta(SrIsotopeType, rj.fluxOceanBurial_Ccarb[i]*SrCarbRatio, vars.Sr_delta[i])
             vars.solutefluxOceanfloor_Sr[i] -= Sr_sedb
@@ -412,7 +414,7 @@ function do_Sr_oceanfloor(
         end   
        
     else
-        error("unknown f_Sr_sedb $(rj.pars.f_Sr_sedb.v)")
+        error("unknown f_Sr_sedb $(pars.f_Sr_sedb[])")
     end
 
     return nothing
@@ -436,11 +438,11 @@ function set_Sr_fluxes_steady_state!(
 
     # Partition Sr weathering from igneous rocks 
     silw = basw + granw
-    PB.setvalue!(rct_Sr_land.pars.k_Sr_basw,  basw/silw*rct_Sr_land.pars.k_Sr_total_igw.v)
-    PB.setvalue!(rct_Sr_land.pars.k_Sr_granw,  granw/silw*rct_Sr_land.pars.k_Sr_total_igw.v)
+    PB.setvalue!(rct_Sr_land.pars.k_Sr_basw,  basw/silw*rct_Sr_land.pars.k_Sr_total_igw[])
+    PB.setvalue!(rct_Sr_land.pars.k_Sr_granw,  granw/silw*rct_Sr_land.pars.k_Sr_total_igw[])
 
     # Total Sr inputs
-    Sr_total_inputs = rct_Sr_land.pars.k_Sr_sedw.v + rct_Sr_land.pars.k_Sr_total_igw.v + rct_Sr_oceanfloor.pars.k_Sr_mantle.v
+    Sr_total_inputs = rct_Sr_land.pars.k_Sr_sedw[] + rct_Sr_land.pars.k_Sr_total_igw[] + rct_Sr_oceanfloor.pars.k_Sr_mantle[]
     @info "set_Sr_fluxes_steady_state!:  Sr_total_inputs = $Sr_total_inputs (mol Sr yr-1)"
 
     # Set total present-day carbonate burial (for normalisation of Sr burial flux) TODO omitting seafloor weathering?
@@ -448,11 +450,11 @@ function set_Sr_fluxes_steady_state!(
 
     # Set Sr seafloor weathering output assuming fraction of Sr to sfw is same as fraction of carbonate
     PB.setvalue!(rct_Sr_oceanfloor.pars.k_Sr_sfw, Sr_total_inputs * sfw / ( silw + carbw + sfw))
-    @info "set_Sr_fluxes_steady_state!:  seafloor weathering k_Sr_sfw = $(rct_Sr_oceanfloor.pars.k_Sr_sfw.v) (mol Sr yr-1)"
+    @info "set_Sr_fluxes_steady_state!:  seafloor weathering k_Sr_sfw = $(rct_Sr_oceanfloor.pars.k_Sr_sfw[]) (mol Sr yr-1)"
 
     # Set Sr burial output for steady state
-    PB.setvalue!(rct_Sr_oceanfloor.pars.k_Sr_sedb, Sr_total_inputs - rct_Sr_oceanfloor.pars.k_Sr_sfw.v)
-    @info "set_Sr_fluxes_steady_state!:  ocean burial k_Sr_sedb = $(rct_Sr_oceanfloor.pars.k_Sr_sedb.v) (mol Sr yr-1)"
+    PB.setvalue!(rct_Sr_oceanfloor.pars.k_Sr_sedb, Sr_total_inputs - rct_Sr_oceanfloor.pars.k_Sr_sfw[])
+    @info "set_Sr_fluxes_steady_state!:  ocean burial k_Sr_sedb = $(rct_Sr_oceanfloor.pars.k_Sr_sedb[]) (mol Sr yr-1)"
 
 
     return nothing

@@ -71,13 +71,13 @@ end
 
 function PB.register_methods!(rj::ReactionLandBergman2004)
 
-    if rj.pars.f_landbiota.v == "Dynamic"
+    if rj.pars.f_landbiota[] == "Dynamic"
         var_VEG = PB.VarPropScalar("VEG",     "",           "Mass of terrestrial biosphere")
-    elseif rj.pars.f_landbiota.v == "Prescribed"
+    elseif rj.pars.f_landbiota[] == "Prescribed"
         # VEG supplied as forcing
         var_VEG = PB.VarDepScalar("global.VEG",     "",           "Mass of terrestrial biosphere")
     else
-        error("unknown f_landbiota='$(pars.f_landbiota.v)'")
+        error("unknown f_landbiota='$(pars.f_landbiota[])'")
     end
 
     # dependencies
@@ -152,8 +152,8 @@ function PB.register_methods!(rj::ReactionLandBergman2004)
         ])
 
     # isotope Types
-    CIsotopeType = rj.pars.CIsotope.v
-    SIsotopeType = rj.pars.SIsotope.v
+    CIsotopeType = rj.pars.CIsotope[]
+    SIsotopeType = rj.pars.SIsotope[]
 
     # Add flux couplers
     fluxAtoLand = PB.Fluxes.FluxContribScalar(
@@ -187,20 +187,20 @@ end
 "Calculate rates"
 function do_land_bergman2004(
     m::PB.ReactionMethod,
+    pars,
     (fluxAtoLand, fluxRtoOcean, fluxLandtoSedCrust, D), 
     cellrange::PB.AbstractCellRange,
     deltat
 )
-    pars = m.reaction.pars
     (Cisotopetype, Sisotopetype) = m.p
 
     # land biota
-    if pars.f_landbiota.v == "Dynamic"
+    if pars.f_landbiota[] == "Dynamic"
         copse_landbiota_bergman2004( pars, D )
-    elseif pars.f_landbiota.v == "Prescribed"
+    elseif pars.f_landbiota[] == "Prescribed"
         # VEG supplied as forcing
     else
-        error("unknown f_landbiota='$(pars.f_landbiota.v)'")
+        error("unknown f_landbiota='$(pars.f_landbiota[])'")
     end
 
     #%%%%%%%% calculate weathering
@@ -219,43 +219,43 @@ function do_land_bergman2004(
     D.f_co2[] = D.f_preplant[]*(1.0 - D.VWmin[]) + D.f_plant[]*D.VWmin[]
     D.g_co2[] = D.g_preplant[]*(1.0 - D.VWmin[]) + D.g_plant[]*D.VWmin[]
 
-    D.w_plantenhance[] = (pars.k15_plantenhance.v +
-                (1.0 - pars.k15_plantenhance.v) * D.W[] * D.VEG[])
+    D.w_plantenhance[] = (pars.k15_plantenhance[] +
+                (1.0 - pars.k15_plantenhance[]) * D.W[] * D.VEG[])
 
     # silicate and carbonate weathering
     D.silw_relative[] = D.UPLIFT[]*D.w_plantenhance[] * D.f_co2[]
-    D.silw[] = pars.k_silw.v*D.silw_relative[]
+    D.silw[] = pars.k_silw[]*D.silw_relative[]
 
     carbw_fac = D.UPLIFT[]*D.w_plantenhance[]*D.g_co2[]
-    if pars.f_carbwC.v == "Cindep"   # Copse 5_14
+    if pars.f_carbwC[] == "Cindep"   # Copse 5_14
         D.carbw_relative[] = carbw_fac
-    elseif pars.f_carbwC.v == "Cprop"   # A generalization for varying-size C reservoir
+    elseif pars.f_carbwC[] == "Cprop"   # A generalization for varying-size C reservoir
         D.carbw_relative[] = carbw_fac*D.C_norm[]
     else
-       error("Unknown f_carbwC ", pars.f_carbwC.v)
+       error("Unknown f_carbwC ", pars.f_carbwC[])
     end
-    D.carbw[] = pars.k14_carbw.v*D.carbw_relative[]
+    D.carbw[] = pars.k14_carbw[]*D.carbw_relative[]
     
 
     #%%%% Oxidative weathering
     # Functional form of oxidative weathering
-    if pars.f_oxwO.v == "PowerO2"   # Copse 5_14 base with f_oxw_a = 0.5
-        D.oxw_fac[] = D.pO2PAL[]^pars.f_oxw_a.v
-    elseif pars.f_oxwO.v == "SatO2"
-        D.oxw_fac[] = D.pO2PAL[] /(D.pO2PAL[] + pars.f_oxw_halfsat.v)
+    if pars.f_oxwO[] == "PowerO2"   # Copse 5_14 base with f_oxw_a = 0.5
+        D.oxw_fac[] = D.pO2PAL[]^pars.f_oxw_a[]
+    elseif pars.f_oxwO[] == "SatO2"
+        D.oxw_fac[] = D.pO2PAL[] /(D.pO2PAL[] + pars.f_oxw_halfsat[])
     else
-       error("Unknown f_foxwO ", pars.f_oxwO.v)
+       error("Unknown f_foxwO ", pars.f_oxwO[])
     end
     # C oxidative weathering
     D.oxidw_relative[]  = D.UPLIFT[]*D.G_norm[]*D.oxw_fac[]
-    D.oxidw[]           = pars.k17_oxidw.v * D.oxidw_relative[] 
+    D.oxidw[]           = pars.k17_oxidw[] * D.oxidw_relative[] 
 
     # Sulphur weathering
-    if pars.enableS.v
+    if pars.enableS[]
         # Gypsum weathering tied to carbonate weathering
-        D.gypw[] = pars.k22_gypw.v * D.GYP_norm[] * carbw_fac
+        D.gypw[] = pars.k22_gypw[] * D.GYP_norm[] * carbw_fac
         # Pyrite oxidative weathering with same functional form as carbon
-        D.pyrw[] = pars.k21_pyrw.v * D.UPLIFT[]*D.PYR_norm[] * D.oxw_fac[]
+        D.pyrw[] = pars.k21_pyrw[] * D.UPLIFT[]*D.PYR_norm[] * D.oxw_fac[]
         # Isotope fractionation of S
         gypw_isotope = @PB.isotope_totaldelta(Sisotopetype, D.gypw[], D.GYP_delta[])
         pyrw_isotope = @PB.isotope_totaldelta(Sisotopetype, D.pyrw[], D.PYR_delta[])
@@ -265,13 +265,13 @@ function do_land_bergman2004(
     end
 
     # P weathering and delivery to land and sea
-    D.phosw_s[] = pars.k10_phosw.v * (2.0/12.0)*D.silw_relative[]   
-    D.phosw_c[] = pars.k10_phosw.v * (5.0/12.0)*D.carbw_relative[]
-    D.phosw_o[] = pars.k10_phosw.v * (5.0/12.0)*D.oxidw_relative[]
+    D.phosw_s[] = pars.k10_phosw[] * (2.0/12.0)*D.silw_relative[]   
+    D.phosw_c[] = pars.k10_phosw[] * (5.0/12.0)*D.carbw_relative[]
+    D.phosw_o[] = pars.k10_phosw[] * (5.0/12.0)*D.oxidw_relative[]
     D.phosw[]   = D.phosw_s[] + D.phosw_c[] + D.phosw_o[]
 
-    D.pland[]   = pars.k11_landfrac.v*D.VEG[]*D.phosw[]
-    pland0      = pars.k11_landfrac.v*pars.k10_phosw.v
+    D.pland[]   = pars.k11_landfrac[]*D.VEG[]*D.phosw[]
+    pland0      = pars.k11_landfrac[]*pars.k10_phosw[]
 
     D.psea[]    = D.phosw[] - D.pland[]
 
@@ -279,12 +279,12 @@ function do_land_bergman2004(
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     # Land organic carbon burial
-    if pars.f_locb.v == "original"
-        D.locb[] = pars.k5_locb.v * (D.pland[]/(pland0+eps())) * D.CPland_relative[] # guard against pland0 == 0
-    elseif pars.f_locb.v == "Prescribed"
-        D.locb[] = pars.k5_locb.v*D.locbpert[]
+    if pars.f_locb[] == "original"
+        D.locb[] = pars.k5_locb[] * (D.pland[]/(pland0+eps())) * D.CPland_relative[] # guard against pland0 == 0
+    elseif pars.f_locb[] == "Prescribed"
+        D.locb[] = pars.k5_locb[]*D.locbpert[]
     else
-        error("unknown f_locb='$(pars.f_locb.v)")
+        error("unknown f_locb='$(pars.f_locb[])")
     end
 
     ## C isotopes
@@ -366,7 +366,7 @@ function copse_landbiota_bergman2004(pars, D)
     # (only used for fire ignition probability)
     D.mrO2[] = D.pO2PAL[] / (D.pO2PAL[] + PB.Constants.k16_PANtoO)
     D.ignit[] = max(586.2*D.mrO2[] - 122.102, 0.0)
-    D.firef[] = pars.k_fire.v/(pars.k_fire.v - 1.0 + D.ignit[])
+    D.firef[] = pars.k_fire[]/(pars.k_fire[] - 1.0 + D.ignit[])
 
     # Mass of terrestrial biosphere
     D.VEG[] = D.V_npp[] * D.firef[]

@@ -42,24 +42,24 @@ function PB.register_methods!(rj::ReactionCIsotopes)
         PB.VarPropScalar("land.D_eqbw_CO2", "per mil", "d13C fractionation between atmospheric CO2 and fresh water")
     ]
 
-    if rj.pars.do_D_mccb_DIC.v
+    if rj.pars.do_D_mccb_DIC[]
         push!(vars, PB.VarPropScalar("ocean.D_mccb_DIC", "per mil", "d13C marine calcite burial relative to ocean DIC"))
     end
-    if rj.pars.do_D_B_mccb_mocb.v
+    if rj.pars.do_D_B_mccb_mocb[]
         push!(vars, PB.VarPropScalar("ocean.D_B_mccb_mocb", "per mil", "d13C fractionation between marine organic and calcite burial"))
     end
-    if rj.pars.do_D_P_CO2_locb.v
+    if rj.pars.do_D_P_CO2_locb[]
         push!(vars, PB.VarPropScalar("land.D_P_CO2_locb", "per mil", "d13C fractionation between terrestrial organic burial and atmospheric CO2"))
     end
              
-    if rj.pars.f_cisotopefrac.v in ("copse_base", "copse_noO2")
+    if rj.pars.f_cisotopefrac[] in ("copse_base", "copse_noO2")
         push!(vars,
             PB.VarDepScalar("atm.pCO2PAL", "",  "atmospheric pCO2 normalized to present day"),
             PB.VarDepScalar("TEMP", "K", "global surface temperature"),
         )
     end
 
-    if rj.pars.f_cisotopefrac.v == "copse_base"
+    if rj.pars.f_cisotopefrac[] == "copse_base"
         push!(vars, PB.VarDepScalar("atm.pO2PAL", "",  "atmospheric pO2 normalized to present day"))
     end
 
@@ -70,42 +70,42 @@ end
 
 
 function do_CIsotopes(
-    m::PB.ReactionMethod, 
+    m::PB.ReactionMethod,
+    pars,
     (vars, ), 
     cellrange::PB.AbstractCellRange,
     deltat
 )
-    rj = m.reaction
 
-    if      rj.pars.f_cisotopefrac.v == "fixed"
+    if pars.f_cisotopefrac[] == "fixed"
         # 15 degC, 1.0*PAL CO2 and O2
         Tkelvin = 15.0 + PB.Constants.k_CtoK
         pCO2PAL = 1.0
         pO2PAL = 1.0
-    elseif  rj.pars.f_cisotopefrac.v == "copse_base"
+    elseif pars.f_cisotopefrac[] == "copse_base"
         Tkelvin = vars.TEMP[]
         pCO2PAL = vars.pCO2PAL[]
         pO2PAL =  vars.pO2PAL[]
-    elseif  rj.pars.f_cisotopefrac.v == "copse_noO2"
+    elseif pars.f_cisotopefrac[] == "copse_noO2"
         Tkelvin = vars.TEMP[]
         pCO2PAL = vars.pCO2PAL[]
         pO2PAL =  1.0
     else
-        error("unrecognized f_cisotopefrac=", rj.pars.f_cisotopefrac.v)
+        error("unrecognized f_cisotopefrac=", pars.f_cisotopefrac[])
     end
 
-    if rj.pars.do_D_mccb_DIC.v
+    if pars.do_D_mccb_DIC[]
         # marine calcite burial relative to ocean DIC
         vars.D_mccb_DIC[] = 15.10 - 4232.0/Tkelvin
     end
 
-    if rj.pars.do_D_B_mccb_mocb.v
+    if pars.do_D_B_mccb_mocb[]
         # fractionation between marine organic and calcite burial
         pCO2PAL_min = 1e-3 # guard against -ve pCO2PAL when using AD
         vars.D_B_mccb_mocb[] = 33.0 -9.0/sqrt(max(pCO2PAL, pCO2PAL_min)) + 5*(pO2PAL-1)
     end
 
-    if rj.pars.do_D_P_CO2_locb.v
+    if pars.do_D_P_CO2_locb[]
         # fractionation between terrestrial organic burial and atmospheric CO2
         vars.D_P_CO2_locb[] = 19 + 5*(pO2PAL-1)
     end
