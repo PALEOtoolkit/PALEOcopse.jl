@@ -39,7 +39,7 @@ end
 function PB.register_methods!(rj::ReactionCarbBurialAlk)
 
     # isotope Types
-    CIsotopeType = rj.pars.CIsotope.v
+    CIsotopeType = rj.pars.CIsotope[]
 
     # dependencies required in do_react
     vars = PB.VariableReaction[      

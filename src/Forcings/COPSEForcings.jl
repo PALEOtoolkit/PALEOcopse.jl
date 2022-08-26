@@ -296,7 +296,7 @@ function PB.register_methods!(rj::ReactionForce_spreadsheet)
   
     var_tforce = PB.VarDepScalar("tforce",     "yr",  
         "historical time at which to apply forcings, present = 0 yr")
-    var_FORCE = PB.VarPropScalar(rj.pars.forcename.v,    "",  
+    var_FORCE = PB.VarPropScalar(rj.pars.forcename[],    "",  
         "forcing interpolated from spreadsheet")
     PB.setfrozen!(rj.pars.forcename)
 
@@ -315,30 +315,30 @@ function PB.register_methods!(rj::ReactionForce_spreadsheet)
     return nothing
 end
 
-function setup_force_spreadsheet(m::PB.ReactionMethod, (), cellrange::PB.AbstractCellRange, attribute_name)
+function setup_force_spreadsheet(m::PB.ReactionMethod, pars, (), cellrange::PB.AbstractCellRange, attribute_name)
     rj = m.reaction
 
     attribute_name == :setup || return nothing
 
-    forcingfile = joinpath(rj.pars.datafolder.v, rj.pars.datafile.v)
+    forcingfile = joinpath(pars.datafolder[], pars.datafile[])
     @info "setup_force_spreadsheet ReactionForce_spreadsheet $(PB.fullname(rj)): "*
-        "loading $(rj.pars.forcename.v) forcing from 'datafolder/datafile'='$(forcingfile)'"
-    rj.forcing_data = _read_xlsx(forcingfile, sheetname=rj.pars.sheetname.v)
+        "loading $(pars.forcename[]) forcing from 'datafolder/datafile'='$(forcingfile)'"
+    rj.forcing_data = _read_xlsx(forcingfile, sheetname=pars.sheetname[])
 
-    sp_times = rj.pars.timemultiplier.v*rj.forcing_data[:, rj.pars.timecolumn.v]
-    @info "    'tforce' from $(rj.pars.timemultiplier.v) * column $(rj.pars.timecolumn.v) ($(names(rj.forcing_data)[rj.pars.timecolumn.v]))"
+    sp_times = pars.timemultiplier[]*rj.forcing_data[:, pars.timecolumn[]]
+    @info "    'tforce' from $(pars.timemultiplier[]) * column $(pars.timecolumn[]) ($(names(rj.forcing_data)[pars.timecolumn[]]))"
 
-    sp_values = Float64.(rj.forcing_data[:, rj.pars.datacolumn.v])
-    @info "    '$(rj.pars.forcename.v)' from column $(rj.pars.datacolumn.v) ($(names(rj.forcing_data)[rj.pars.datacolumn.v]))"
+    sp_values = Float64.(rj.forcing_data[:, pars.datacolumn[]])
+    @info "    '$(pars.forcename[])' from column $(pars.datacolumn[]) ($(names(rj.forcing_data)[pars.datacolumn[]]))"
 
     # sort in ascending time order
     sp_perm = sortperm(sp_times)
     rj.force_times = sp_times[sp_perm]
     rj.force_values = sp_values[sp_perm]
 
-    extrap_past = isnan(rj.pars.extrap_value_past.v) ? "earlist value in spreadsheet = $(first(rj.force_values))" : "'extrap_value_past' = $(rj.pars.extrap_value_past.v)"
+    extrap_past = isnan(pars.extrap_value_past[]) ? "earlist value in spreadsheet = $(first(rj.force_values))" : "'extrap_value_past' = $(pars.extrap_value_past[])"
     @info "    extrapolating out-of-range tforce < $(first(rj.force_times)) (yr) to $extrap_past"
-    extrap_future = isnan(rj.pars.extrap_value_future.v) ? "latest value in spreadsheet = $(last(rj.force_values))" : "'extrap_value_future' = $(rj.pars.extrap_value_future.v)"
+    extrap_future = isnan(pars.extrap_value_future[]) ? "latest value in spreadsheet = $(last(rj.force_values))" : "'extrap_value_future' = $(pars.extrap_value_future[])"
     @info "    extrapolating out-of-range tforce > $(last(rj.force_times)) (yr) to $extrap_future"
    
     # create interpolation object
@@ -350,15 +350,15 @@ function setup_force_spreadsheet(m::PB.ReactionMethod, (), cellrange::PB.Abstrac
     return nothing
 end
 
-function do_force_spreadsheet(m::PB.ReactionMethod, (var_tforce, var_FORCE), cellrange::PB.AbstractCellRange, deltat)
+function do_force_spreadsheet(m::PB.ReactionMethod, pars, (var_tforce, var_FORCE), cellrange::PB.AbstractCellRange, deltat)
     rj = m.reaction
 
     tforce = var_tforce[]
 
-    if tforce < first(rj.force_times) && !isnan(rj.pars.extrap_value_past.v)
-        var_FORCE[] = rj.pars.extrap_value_past.v
-    elseif tforce > last(rj.force_times) && !isnan(rj.pars.extrap_value_future.v)
-        var_FORCE[] = rj.pars.extrap_value_future.v
+    if tforce < first(rj.force_times) && !isnan(pars.extrap_value_past[])
+        var_FORCE[] = pars.extrap_value_past[]
+    elseif tforce > last(rj.force_times) && !isnan(pars.extrap_value_future[])
+        var_FORCE[] = pars.extrap_value_future[]
     else
         # extrapolation_bc = Flat() will extrapolate to first/last constant value
         var_FORCE[] =  rj.interp_FORCE(tforce)

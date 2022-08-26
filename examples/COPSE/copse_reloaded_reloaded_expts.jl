@@ -94,18 +94,18 @@ function copse_reloaded_reloaded_expts(
 
     # set parameters for carbonate-silicate weathering steady-state
     rct_ocean       = PB.get_reaction(model, "ocean", "oceanburial_copse")
-    mtotpb = rct_ocean.pars.k2_mocb.v/rct_ocean.pars.CPsea0.v  +rct_ocean.pars.k7_capb.v +rct_ocean.pars.k6_fepb.v
+    mtotpb = rct_ocean.pars.k2_mocb[]/rct_ocean.pars.CPsea0[]  +rct_ocean.pars.k7_capb[] +rct_ocean.pars.k6_fepb[]
     rct_degass      = PB.get_reaction(model, "sedcrust", "sedcrust_copse")
     rct_sfw         = PB.get_reaction(model, "oceanfloor", "sfw")
     rct_land_fluxes = PB.get_reaction(model, "land", "land_fluxes")
     PALEOcopse.Land.LandCOPSEReloaded.set_steady_state(
         rct_land_fluxes, 
-        rct_ocean.pars.k2_mocb.v,
+        rct_ocean.pars.k2_mocb[],
         mtotpb,
-        rct_degass.pars.k12_ccdeg.v,
-        rct_degass.pars.k13_ocdeg.v, 
+        rct_degass.pars.k12_ccdeg[],
+        rct_degass.pars.k13_ocdeg[], 
         0.0,
-        rct_sfw.pars.k_sfw.v
+        rct_sfw.pars.k_sfw[]
     )
 
     # set parameters for Sr steady state
@@ -114,15 +114,13 @@ function copse_reloaded_reloaded_expts(
     PALEOcopse.BioGeoChem.Strontium.set_Sr_fluxes_steady_state!(
         rct_Sr_land,
         rct_Sr_oceanfloor,
-        rct_land_fluxes.pars.k_basw.v,
-        rct_land_fluxes.pars.k_granw.v, 
-        rct_land_fluxes.pars.k14_carbw.v, 
-        rct_sfw.pars.k_sfw.v
+        rct_land_fluxes.pars.k_basw[],
+        rct_land_fluxes.pars.k_granw[], 
+        rct_land_fluxes.pars.k14_carbw[], 
+        rct_sfw.pars.k_sfw[]
     )
                                           
-    run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
-
-    return run
+    return model
 end
 
 function copse_reloaded_reloaded_plot_summary(

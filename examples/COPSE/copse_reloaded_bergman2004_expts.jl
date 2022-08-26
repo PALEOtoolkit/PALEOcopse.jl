@@ -92,23 +92,20 @@ function copse_reloaded_bergman2004_expts(
 
     # set parameters for steady-state
     rct_ocean   = PB.get_reaction(model, "ocean", "oceanburial_copse")
-    mtotpb      = rct_ocean.pars.k2_mocb.v/rct_ocean.pars.CPsea0.v  +rct_ocean.pars.k7_capb.v +rct_ocean.pars.k6_fepb.v
+    mtotpb      = rct_ocean.pars.k2_mocb[]/rct_ocean.pars.CPsea0[]  +rct_ocean.pars.k7_capb[] +rct_ocean.pars.k6_fepb[]
     rct_degass  = PB.get_reaction(model, "sedcrust", "sedcrust_copse")
     
     PALEOcopse.Land.LandCOPSEReloaded.set_steady_state(
         PB.get_reaction(model, "land", "land_fluxes"), 
-        rct_ocean.pars.k2_mocb.v,
+        rct_ocean.pars.k2_mocb[],
         mtotpb,
-        rct_degass.pars.k12_ccdeg.v,
-        rct_degass.pars.k13_ocdeg.v, 
+        rct_degass.pars.k12_ccdeg[],
+        rct_degass.pars.k13_ocdeg[], 
         0.0, 
         0.0
     )
 
-                                          
-    run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
-
-    return run
+    return model
 end
 
 function copse_reloaded_bergman2004_plot_summary(

@@ -59,7 +59,7 @@ end
 
 function PB.register_methods!(rj::ReactionSeafloorWeathering)
 
-    CIsotopeType = rj.pars.CIsotope.v
+    CIsotopeType = rj.pars.CIsotope[]
     PB.setfrozen!(rj.pars.CIsotope)
     vars = [
         PB.VarDep("global.RHOSFW",          "", "seafloor weathering-specific additional forcing (usually 1.0)"),
@@ -87,7 +87,7 @@ function PB.register_methods!(rj::ReactionSeafloorWeathering)
         ["DIC::$CIsotopeType"],
         isotope_data=Dict())
     
-    if rj.pars.sfw_distribution_method.v == "Depth"
+    if rj.pars.sfw_distribution_method[] == "Depth"
         grid_vars = [
             PB.VarDep("ocean.oceanfloor.zlower",    "m",    "oceanfloor depth"),
             PB.VarDep("oceanfloor.Afloor",          "m^2",  "horizontal area of seafloor at base of box"),
@@ -120,13 +120,13 @@ end
 function PB.check_configuration(rj::ReactionSeafloorWeathering, model::PB.Model)
     configok = true
     
-    if rj.pars.sfw_distribution_method.v == "Parameter"
+    if rj.pars.sfw_distribution_method[] == "Parameter"
         PB.check_parameter_sum(rj.pars.sfw_distribution, PB.get_length(rj.domain)) || (configok = false)
-    elseif rj.pars.sfw_distribution_method.v == "Depth"
-        (length(rj.pars.sfw_depthrange.v) == 2 && rj.pars.sfw_depthrange.v[1] < rj.pars.sfw_depthrange.v[2]) || 
+    elseif rj.pars.sfw_distribution_method[] == "Depth"
+        (length(rj.pars.sfw_depthrange) == 2 && rj.pars.sfw_depthrange[1] < rj.pars.sfw_depthrange[2]) || 
             (@warn "invalid sfw_depthrange $(rj.pars.sfw_depthrange.v)"; configok = false)
     else
-        @warn("unknown sfw_distribution_method $(rj.pars.sfw_distribution_method.v)")
+        @warn("unknown sfw_distribution_method $(rj.pars.sfw_distribution_method[])")
     end
 
     return configok
@@ -134,57 +134,57 @@ end
 
 
 function do_seafloor_weathering(
-    m::PB.ReactionMethod, 
+    m::PB.ReactionMethod,
+    pars,
     (fluxOceanBurial, fluxOceanfloorSolute, vars), 
     cellrange::PB.AbstractCellRange,
     deltat
-)   
-    rj = m.reaction
+)
     CIsotopeType = m.p
 
     # Tectonic dependence
-    if rj.pars.f_sfw_force.v  == "None"
+    if pars.f_sfw_force[]  == "None"
         force_sfw = vars.RHOSFW[]
-    elseif rj.pars.f_sfw_force.v == "DEGASS"
+    elseif pars.f_sfw_force[] == "DEGASS"
         force_sfw = vars.RHOSFW[] * vars.DEGASS[]
     else
-        error("unknown f_sfw_force ", rj.pars.f_sfwforce.v)
+        error("unknown f_sfw_force ", pars.f_sfwforce[])
     end
 
     # Temperature / CO2 dependence
     # NB: "sfw_Tbotw" and "sfw_temp" temperature-based functions are _very_ similar 
-    if      rj.pars.f_sfw_opt.v == "mills2014pCO2"       # Mills (2014) PNAS 10.1073/pnas.1321679111
-        f_sfw = vars.pCO2PAL[]^rj.pars.f_sfw_alpha.v        
-    elseif  rj.pars.f_sfw_opt.v == "sfw_Tbotw"           # Stuart sfw function for ox weath model
+    if      pars.f_sfw_opt[] == "mills2014pCO2"       # Mills (2014) PNAS 10.1073/pnas.1321679111
+        f_sfw = vars.pCO2PAL[]^pars.f_sfw_alpha[]        
+    elseif  pars.f_sfw_opt[] == "sfw_Tbotw"           # Stuart sfw function for ox weath model
         # normalised to bottom-water temperature (global TEMP(in C) - 12.5)
         # from S&G high-lat T = 2.5C for Temp = 15C, don't go below freezing        
         TbotwC = max(vars.TEMP[] - PB.Constants.k_CtoK - 12.5, 0) 
         f_sfw = exp(0.066*(TbotwC - 2.5)) # activation energy 41 kJ mol^{-1}
         # NB: oxweath had normalisation error, gave f_sfw = exp(0.165) = 1.18 for present day TEMP = 15C        
-    elseif  rj.pars.f_sfw_opt.v == "sfw_temp"            # Josh Improved sfw function considering temperature
+    elseif  pars.f_sfw_opt[] == "sfw_temp"            # Josh Improved sfw function considering temperature
         f_sfw =  exp(0.0608*(vars.TEMP[] - 288)) # 42KJ/mol activation energy assumed as with terrestrial basalt      
-    elseif  rj.pars.f_sfw_opt.v == "sfw_strong"          # Coogan&Dosso 92 kJ/mol apparent activation energy
+    elseif  pars.f_sfw_opt[] == "sfw_strong"          # Coogan&Dosso 92 kJ/mol apparent activation energy
         f_sfw =  exp(0.1332*(vars.TEMP[] - 288.15))        
-    elseif  rj.pars.f_sfw_opt.v == "sfw_noT"             # No temperature dependence
+    elseif  pars.f_sfw_opt[] == "sfw_noT"             # No temperature dependence
         f_sfw =  1.0        
     else
-        error("unrecognized f_sfw_opt ", rj.pars.f_sfw_opt.v)
+        error("unrecognized f_sfw_opt ", pars.f_sfw_opt[])
     end
             
     # calculate relative rate of seafloor weathering 
     vars.sfw_relative[] =   force_sfw * f_sfw
 
     # total flux, without isotope contribution
-    sfw_total_noisotope = vars.sfw_relative[] * rj.pars.k_sfw.v 
+    sfw_total_noisotope = vars.sfw_relative[] * pars.k_sfw[] 
 
     # isotope composition from local DIC with optional offset 
     if CIsotopeType <: PB.AbstractIsotopeScalar
-        if      rj.pars.f_sfw_d13C.v == "delta_DIC"
+        if      pars.f_sfw_d13C[] == "delta_DIC"
             d13C_offset = 0.0
-        elseif  rj.pars.f_sfw_d13C.v == "delta_mccb"
+        elseif  pars.f_sfw_d13C[] == "delta_mccb"
             d13C_offset = vars.D_mccb_DIC[]
         else
-            error("unknown f_sfw_d13C ", rj.pars.f_sfw_d13C.v)
+            error("unknown f_sfw_d13C ", pars.f_sfw_d13C[])
         end
     end
 
@@ -192,7 +192,7 @@ function do_seafloor_weathering(
     @inbounds for i in cellrange.indices
         vars.sfw[i] = @PB.isotope_totaldelta(
             CIsotopeType, 
-            sfw_total_noisotope*rj.pars.sfw_distribution.v[i], 
+            sfw_total_noisotope*pars.sfw_distribution[i], 
             vars.DIC_delta[i] + d13C_offset
         )
         fluxOceanBurial.Ccarb[i]    += vars.sfw[i]
@@ -205,7 +205,8 @@ end
 
 "set distribution of sfw flux for equal flux per unit area for boxes in specified depth range"
 function set_distributionfromdepths(
-    m::PB.ReactionMethod, 
+    m::PB.ReactionMethod,
+    pars,
     (vars, ), 
     cellrange::PB.AbstractCellRange, 
     attribute_name
@@ -219,7 +220,7 @@ function set_distributionfromdepths(
         error("ReactionSeafloorWeathering $(PB.fullname(rj)) set_distributionfromdepths cellrange does not cover whole Domain")
 
     sfw_distribution = zeros(PB.get_length(rj.domain))
-    depth_lower, depth_upper = rj.pars.sfw_depthrange.v
+    depth_lower, depth_upper = pars.sfw_depthrange
 
     nsfw = 0.0
     for i in eachindex(sfw_distribution)      
@@ -233,7 +234,7 @@ function set_distributionfromdepths(
     normsum = sum(sfw_distribution)
     Atot = sum(vars.Afloor)
     @info "    sfw distributed among $nsfw of $(length(sfw_distribution)) boxes, area $normsum m^2 of $Atot m^2"
-    PB.setvalue!(rj.pars.sfw_distribution, sfw_distribution./normsum)
+    PB.setvalue!(pars.sfw_distribution, sfw_distribution./normsum)
 
     return nothing
 end

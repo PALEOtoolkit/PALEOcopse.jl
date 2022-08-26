@@ -23,18 +23,20 @@ comparemodel = CompareOutput.copse_output_load("bergman2004","")
 
 use_TEMP_DAE = false
 
-run = copse_bergman2004_bergman2004_expts(
+model = copse_bergman2004_bergman2004_expts(
     ["baseline"],
     modelpars=Dict("temp_DAE"=>use_TEMP_DAE),
 )
 
-initial_state, modeldata = PALEOmodel.initialize!(run)
+initial_state, modeldata = PALEOmodel.initialize!(model)
 
 # call ODE function to check derivative
 initial_deriv = similar(initial_state)
-PALEOmodel.ODE.ModelODE(modeldata)(initial_deriv, initial_state , (run=run, modeldata=modeldata), 0.0)
+PALEOmodel.SolverFunctions.ModelODE(modeldata)(initial_deriv, initial_state , nothing, 0.0)
 println("initial_state", initial_state)
 println("initial_deriv", initial_deriv)
+
+run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
 
 if use_TEMP_DAE
     println("integrate, DAE")

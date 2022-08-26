@@ -251,15 +251,15 @@ end
 function set_parameters_modern_steady_state(copsemodel::ReactionModelBergman2004)
     # set parameters for steady-state
     pars = copsemodel.pars
-    PB.setvalue!(pars.k17_oxidw, pars.k2_mocb.v + pars.k5_locb.v - pars.k13_ocdeg.v)
+    PB.setvalue!(pars.k17_oxidw, pars.k2_mocb[] + pars.k5_locb[] - pars.k13_ocdeg[])
     @info "set" pars.k17_oxidw
 
-    PB.setvalue!(pars.k_silw, -pars.k2_mocb.v - pars.k5_locb.v
-                    + pars.k17_oxidw.v + pars.k13_ocdeg.v + pars.k12_ccdeg.v)
+    PB.setvalue!(pars.k_silw, -pars.k2_mocb[] - pars.k5_locb[]
+                    + pars.k17_oxidw[] + pars.k13_ocdeg[] + pars.k12_ccdeg[])
     @info "set" pars.k_silw
 
-    PB.setvalue!(pars.k10_phosw, (pars.k2_mocb.v/pars.CPsea0.v  + pars.k7_capb.v + pars.k6_fepb.v) /
-                            (1.0-pars.k11_landfrac.v))
+    PB.setvalue!(pars.k10_phosw, (pars.k2_mocb[]/pars.CPsea0[]  + pars.k7_capb[] + pars.k6_fepb[]) /
+                            (1.0-pars.k11_landfrac[]))
     @info "set" pars.k10_phosw
 
 end
@@ -267,9 +267,7 @@ end
 
 
 
-function do_stateandeqb(m::PB.ReactionMethod, (S, D), cellrange::PB.AbstractCellRange, deltat)
-
-    pars = m.reaction.pars
+function do_stateandeqb(m::PB.ReactionMethod, pars, (S, D), cellrange::PB.AbstractCellRange, deltat)
 
     # Add user-friendly atmospheric concentrations etc
     D.pO2PAL[] = D.O_norm[]
@@ -278,38 +276,36 @@ function do_stateandeqb(m::PB.ReactionMethod, (S, D), cellrange::PB.AbstractCell
 
 
     # Carbon isotope fractionation (relative to total CO2 (A reservoir)
-    if pars.f_cisotopefrac.v == "fixed"
+    if pars.f_cisotopefrac[] == "fixed"
         D.d_mocb[] = -30.0
         D.d_locb[] = -30.0
         D.d_mccb[] = 0.0
-    elseif pars.f_cisotopefrac.v == "copse_base"
+    elseif pars.f_cisotopefrac[] == "copse_base"
         D.d_locb[], D_P, D.d_mocb[], D_B, D.d_mccb[], d_ocean, d_atmos =
              copse_Cisotopefrac( D.TEMP[], D.pCO2PAL[], D.O_norm[] )
-    elseif pars.f_cisotopefrac.v == "copse_noO2"
+    elseif pars.f_cisotopefrac[] == "copse_noO2"
         D.d_locb[], D_P, D.d_mocb[], D_B, D.d_mccb[], d_ocean, d_atmos =
              copse_Cisotopefrac( D.TEMP[], D.pCO2PAL[], 1.0 )
     else
-        error("unknown f_cisotopefrac ", pars.f_cisotopefrac.v)
+        error("unknown f_cisotopefrac ", pars.f_cisotopefrac[])
     end
     # delta of marine carbonate burial
     D.mccb_delta[] = D.A_delta[] + D.d_mccb[]
 
     # Pyrite sulphur isotope fractionation relative to sulphate and gypsum
-    if   pars.f_sisotopefrac.v == "fixed"
+    if   pars.f_sisotopefrac[] == "fixed"
         D.D_mpsb[] = 35.0
-    elseif pars.f_sisotopefrac.v == "copse_O2"
+    elseif pars.f_sisotopefrac[] == "copse_O2"
         D.D_mpsb[] = 35.0*D.O_norm[]
     else
-        error("unknown f_sisotopefrac ", pars.f_sisotopefrac.v)
+        error("unknown f_sisotopefrac ", pars.f_sisotopefrac[])
     end
 
     return nothing
 end
 
 
-function do_react(m::PB.ReactionMethod, (S, D), cellrange::PB.AbstractCellRange, deltat)
-
-    pars = m.reaction.pars
+function do_react(m::PB.ReactionMethod, pars, (S, D), cellrange::PB.AbstractCellRange, deltat)
 
     # land biota
     copse_landbiota_bergman2004( pars, S, D, D.TEMP[] )
@@ -328,48 +324,48 @@ function do_react(m::PB.ReactionMethod, (S, D), cellrange::PB.AbstractCellRange,
     D.f_co2[] = D.f_preplant[]*(1.0 - D.VWmin[]) + D.f_plant[]*D.VWmin[]
     D.g_co2[] = D.g_preplant[]*(1.0 - D.VWmin[]) + D.g_plant[]*D.VWmin[]
 
-    D.w_plantenhance[] = (pars.k15_plantenhance.v +
-                (1.0 - pars.k15_plantenhance.v) * D.W[] * D.VEG[])
+    D.w_plantenhance[] = (pars.k15_plantenhance[] +
+                (1.0 - pars.k15_plantenhance[]) * D.W[] * D.VEG[])
 
     # silicate and carbonate weathering
-    D.silw[] = pars.k_silw.v*D.UPLIFT[]*D.w_plantenhance[] * D.f_co2[]
+    D.silw[] = pars.k_silw[]*D.UPLIFT[]*D.w_plantenhance[] * D.f_co2[]
 
     carbw_fac = D.UPLIFT[]*D.w_plantenhance[]*D.g_co2[]
-    if pars.f_carbwC.v == "Cindep"   # Copse 5_14
-        D.carbw[] = pars.k14_carbw.v*carbw_fac
-    elseif pars.f_carbwC.v == "Cprop"   # A generalization for varying-size C reservoir
-        D.carbw[] = pars.k14_carbw.v*carbw_fac*D.C_norm[]
+    if pars.f_carbwC[] == "Cindep"   # Copse 5_14
+        D.carbw[] = pars.k14_carbw[]*carbw_fac
+    elseif pars.f_carbwC[] == "Cprop"   # A generalization for varying-size C reservoir
+        D.carbw[] = pars.k14_carbw[]*carbw_fac*D.C_norm[]
     else
-       error("Unknown f_carbwC ", pars.f_carbwC.v)
+       error("Unknown f_carbwC ", pars.f_carbwC[])
     end
 
     #%%%% Oxidative weathering
     # Functional form of oxidative weathering
-    if pars.f_oxwO.v == "PowerO2"   # Copse 5_14 base with f_oxw_a = 0.5
-        D.oxw_fac[] = D.O_norm[]^pars.f_oxw_a.v
-    elseif pars.f_oxwO.v == "SatO2"
-        D.oxw_fac[] = D.O_norm[] /(D.O_norm[] + pars.f_oxw_halfsat.v)
+    if pars.f_oxwO[] == "PowerO2"   # Copse 5_14 base with f_oxw_a = 0.5
+        D.oxw_fac[] = D.O_norm[]^pars.f_oxw_a[]
+    elseif pars.f_oxwO[] == "SatO2"
+        D.oxw_fac[] = D.O_norm[] /(D.O_norm[] + pars.f_oxw_halfsat[])
     else
-       error("Unknown f_foxwO ", pars.f_oxwO.v)
+       error("Unknown f_foxwO ", pars.f_oxwO[])
     end
     # C oxidative weathering
-    D.oxidw[] = pars.k17_oxidw.v * D.UPLIFT[]*D.G_norm[]*D.oxw_fac[]
+    D.oxidw[] = pars.k17_oxidw[] * D.UPLIFT[]*D.G_norm[]*D.oxw_fac[]
 
     # Sulphur weathering
 
     # Gypsum weathering tied to carbonate weathering
-    D.gypw[] = pars.k22_gypw.v * D.GYP_norm[] * carbw_fac
+    D.gypw[] = pars.k22_gypw[] * D.GYP_norm[] * carbw_fac
     # Pyrite oxidative weathering with same functional form as carbon
-    D.pyrw[] = pars.k21_pyrw.v * D.UPLIFT[]*D.PYR_norm[] * D.oxw_fac[]
+    D.pyrw[] = pars.k21_pyrw[] * D.UPLIFT[]*D.PYR_norm[] * D.oxw_fac[]
 
     # P weathering and delivery to land and sea
-    D.phosw_s[] = pars.k10_phosw.v * (2.0/12.0)*(D.silw[]/pars.k_silw.v)
-    D.phosw_c[] = pars.k10_phosw.v * (5.0/12.0)*(D.carbw[]/pars.k14_carbw.v)
-    D.phosw_o[] = pars.k10_phosw.v * (5.0/12.0)*(D.oxidw[]/pars.k17_oxidw.v)
+    D.phosw_s[] = pars.k10_phosw[] * (2.0/12.0)*(D.silw[]/pars.k_silw[])
+    D.phosw_c[] = pars.k10_phosw[] * (5.0/12.0)*(D.carbw[]/pars.k14_carbw[])
+    D.phosw_o[] = pars.k10_phosw[] * (5.0/12.0)*(D.oxidw[]/pars.k17_oxidw[])
     D.phosw[]   = D.phosw_s[] + D.phosw_c[] + D.phosw_o[]
 
-    D.pland[]   = pars.k11_landfrac.v*D.VEG[]*D.phosw[]
-    pland0      = pars.k11_landfrac.v*pars.k10_phosw.v
+    D.pland[]   = pars.k11_landfrac[]*D.VEG[]*D.phosw[]
+    pland0      = pars.k11_landfrac[]*pars.k10_phosw[]
 
     D.psea[]    = D.phosw[] - D.pland[]
 
@@ -377,23 +373,23 @@ function do_react(m::PB.ReactionMethod, (S, D), cellrange::PB.AbstractCellRange,
     #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     #  Inorganic carbon
-    D.ccdeg[]  = pars.k12_ccdeg.v*D.DEGASS[]*D.C_norm[]*D.Bforcing[]
+    D.ccdeg[]  = pars.k12_ccdeg[]*D.DEGASS[]*D.C_norm[]*D.Bforcing[]
 
     # Organic carbon
-    ocdeg_raw = pars.k13_ocdeg.v*D.DEGASS[]*D.G_norm[]
-    if pars.f_ocdeg.v == "O2indep"
+    ocdeg_raw = pars.k13_ocdeg[]*D.DEGASS[]*D.G_norm[]
+    if pars.f_ocdeg[] == "O2indep"
         D.ocdeg[] = ocdeg_raw
-    elseif pars.f_ocdeg.v == "O2copsecrashprevent"
+    elseif pars.f_ocdeg[] == "O2copsecrashprevent"
         # COPSE 5_14 does this (always) apparently to prevent pO2 dropping to zero ?
         # This has a big effect when pO2 dependence of oxidative weathering switched off
         D.ocdeg[] = ocdeg_raw*PALEOcopse.COPSE.copse_crash(D.O_norm[], "ocdeg", D.tforce[])
     else
-        error("unrecogized pars.f_ocdeg ", pars.f_ocdeg.v)
+        error("unrecogized pars.f_ocdeg ", pars.f_ocdeg[])
     end
 
     # Sulphur
-    D.pyrdeg[] = pars.k_pyrdeg.v*D.PYR_norm[]*D.DEGASS[]
-    D.gypdeg[] = pars.k_gypdeg.v*D.GYP_norm[]*D.DEGASS[]
+    D.pyrdeg[] = pars.k_pyrdeg[]*D.PYR_norm[]*D.DEGASS[]
+    D.gypdeg[] = pars.k_gypdeg[]*D.GYP_norm[]*D.DEGASS[]
 
 
     #%%%%%%% Marine biota
@@ -409,31 +405,31 @@ function do_react(m::PB.ReactionMethod, (S, D), cellrange::PB.AbstractCellRange,
 
     #%%%%% Reduced C species burial
     # Marine organic carbon burial
-    D.mocb[] = pars.k2_mocb.v * (D.newp[]/pars.newp0.v)^pars.f_mocb_b.v
+    D.mocb[] = pars.k2_mocb[] * (D.newp[]/pars.newp0[])^pars.f_mocb_b[]
     # Land organic carbon burial
-    D.locb[] = pars.k5_locb.v * (D.pland[]/pland0) * D.CPland_relative[]
+    D.locb[] = pars.k5_locb[] * (D.pland[]/pland0) * D.CPland_relative[]
 
     # Marine organic P burial
     D.mopb[] = (D.mocb[]/D.CPsea[])
     # Marine carbonate-associated P burial
-    D.capb[] = pars.k7_capb.v * ((D.newp[]/pars.newp0.v)^pars.f_mocb_b.v)
+    D.capb[] = pars.k7_capb[] * ((D.newp[]/pars.newp0[])^pars.f_mocb_b[])
     # Marine Fe-sorbed P burial NB: COPSE 5_14 uses PALEOcopse.COPSE.copse_crash to limit at low P
-    D.fepb[] = ((pars.k6_fepb.v/pars.k1_oxfrac.v) * (1.0 - D.ANOX[]) *
+    D.fepb[] = ((pars.k6_fepb[]/pars.k1_oxfrac[]) * (1.0 - D.ANOX[]) *
                     PALEOcopse.COPSE.copse_crash(D.P_norm[], "fepb", D.tforce[]) )
 
     # Marine organic nitrogen burial
-    D.monb[] = D.mocb[]/pars.CNsea0.v
+    D.monb[] = D.mocb[]/pars.CNsea0[]
 
     # Marine sulphur burial
     # Marine gypsum sulphur burial
-    D.mgsb[] = pars.k_mgsb.v * D.S_norm[] * D.CAL_norm[]
+    D.mgsb[] = pars.k_mgsb[] * D.S_norm[] * D.CAL_norm[]
     # Marine pyrite sulphur burial
-    if pars.f_pyrburial.v == "copse_noO2"  # dependent on sulphate and marine carbon burial
-        D.mpsb[] = pars.k_mpsb.v*D.S_norm[]*(D.mocb[]/pars.k2_mocb.v)
-    elseif pars.f_pyrburial.v == "copse_O2"   # dependent on oxygen, sulphate, and marine carbon burial
-        D.mpsb[] = pars.k_mpsb.v*D.S_norm[]/D.O_norm[]*(D.mocb[]/pars.k2_mocb.v)
+    if pars.f_pyrburial[] == "copse_noO2"  # dependent on sulphate and marine carbon burial
+        D.mpsb[] = pars.k_mpsb[]*D.S_norm[]*(D.mocb[]/pars.k2_mocb[])
+    elseif pars.f_pyrburial[] == "copse_O2"   # dependent on oxygen, sulphate, and marine carbon burial
+        D.mpsb[] = pars.k_mpsb[]*D.S_norm[]/D.O_norm[]*(D.mocb[]/pars.k2_mocb[])
     else
-        error("unknown f_pyrburial ", pars.f_pyrburial.v)
+        error("unknown f_pyrburial ", pars.f_pyrburial[])
     end
 
     return nothing
@@ -441,8 +437,6 @@ end
 
 
 function do_updatestate(m::PB.ReactionMethod, (S, D), cellrange::PB.AbstractCellRange, deltat)
-
-    pars = m.reaction.pars
 
     # %%%% Atmosphere / ocean reservoirs
      # Oxygen
@@ -542,7 +536,7 @@ function copse_landbiota_bergman2004(pars, S, D, TEMP)
     # (only used for fire ignition probability)
     D.mrO2[] = D.pO2PAL[] / (D.pO2PAL[] + PB.Constants.k16_PANtoO)
     D.ignit[] = max(586.2*D.mrO2[] - 122.102, 0.0)
-    D.firef[] = pars.k_fire.v/(pars.k_fire.v - 1.0 + D.ignit[])
+    D.firef[] = pars.k_fire[]/(pars.k_fire[] - 1.0 + D.ignit[])
 
     # Mass of terrestrial biosphere
     D.VEG[] = D.V_npp[] * D.firef[]
@@ -572,33 +566,33 @@ function copse_marinebiota_bergman2004(pars, tmodel, S, D )
 
     #%%%%%% OCEAN ANOXIC FRACTION
 
-    D.ANOX[] = max( 1.0 - pars.k1_oxfrac.v*D.pO2PAL[] * pars.newp0.v/D.newp[], 0.0 )
+    D.ANOX[] = max( 1.0 - pars.k1_oxfrac[]*D.pO2PAL[] * pars.newp0[]/D.newp[], 0.0 )
 
     #%%%% CP ratio
-    if   pars.f_CPsea.v == "Fixed"
-        D.CPsea[] = pars.CPsea0.v
-    elseif pars.f_CPsea.v == "VCI"  # NB typo in Bergman (2004) has dependency reversed
-        D.CPsea[] = (pars.f_CPsea_VCI_oxic.v*pars.f_CPsea_VCI_anoxic.v /
-         ((1.0-D.ANOX[])*pars.f_CPsea_VCI_anoxic.v + D.ANOX[]*pars.f_CPsea_VCI_oxic.v))
+    if   pars.f_CPsea[] == "Fixed"
+        D.CPsea[] = pars.CPsea0[]
+    elseif pars.f_CPsea[] == "VCI"  # NB typo in Bergman (2004) has dependency reversed
+        D.CPsea[] = (pars.f_CPsea_VCI_oxic[]*pars.f_CPsea_VCI_anoxic[] /
+         ((1.0-D.ANOX[])*pars.f_CPsea_VCI_anoxic[] + D.ANOX[]*pars.f_CPsea_VCI_oxic[]))
     else
-        error("unrecognized f_CPsea ", pars.f_CPsea.v)
+        error("unrecognized f_CPsea ", pars.f_CPsea[])
     end
 
     #%%%%% nitrogen cycle
     if (S.N[]/16.0) < S.P[]
-        D.nfix[] = pars.k3_nfix.v *( ( S.P[] - S.N[]/16.0 ) / ( P0  - N0/16.0) )^pars.f_nfix_power.v
+        D.nfix[] = pars.k3_nfix[] *( ( S.P[] - S.N[]/16.0 ) / ( P0  - N0/16.0) )^pars.f_nfix_power[]
     else
-        if   pars.f_nfix_nreplete.v == "Off" # Surely more defensible ?
+        if   pars.f_nfix_nreplete[] == "Off" # Surely more defensible ?
             D.nfix[] = 0.0
-        elseif pars.f_nfix_nreplete.v == "Sign" # SD - COPSE 5_14 C code has this (?!)
-            D.nfix[] = pars.k3_nfix.v *( - ( S.P[] - S.N[]/16.0 ) / ( P0  - N0/16.0)  )^pars.f_nfix_power.v
+        elseif pars.f_nfix_nreplete[] == "Sign" # SD - COPSE 5_14 C code has this (?!)
+            D.nfix[] = pars.k3_nfix[] *( - ( S.P[] - S.N[]/16.0 ) / ( P0  - N0/16.0)  )^pars.f_nfix_power[]
             print("COPSE_equations -ve nfix (check pars.f_nfix_nreplete) tmodel ", tmodel)
         else
-            error("unrecognized f_nfix_nreplete ", pars.f_nfix_nreplete.v)
+            error("unrecognized f_nfix_nreplete ", pars.f_nfix_nreplete[])
         end
     end
     # Denitrification NB: COPSE 5_14 uses PALEOcopse.COPSE.copse_crash to limit at low N
-    D.denit[] = (pars.k4_denit.v * (1.0 + D.ANOX[] / (1.0 - pars.k1_oxfrac.v) ) *
+    D.denit[] = (pars.k4_denit[] * (1.0 + D.ANOX[] / (1.0 - pars.k1_oxfrac[]) ) *
                      PALEOcopse.COPSE.copse_crash(D.N_norm[], "denit", tmodel))
     return nothing
 end

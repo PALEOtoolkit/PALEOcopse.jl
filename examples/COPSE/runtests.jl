@@ -27,8 +27,11 @@ skipped_testsets = [
     # load archived model output 
     comparemodel = CompareOutput.copse_output_load("reloaded", "reloaded_baseline")
 
-    run = copse_reloaded_reloaded_expts("reloaded", ["baseline"])
-    initial_state, modeldata = PALEOmodel.initialize!(run)
+    model = copse_reloaded_reloaded_expts("reloaded", ["baseline"])
+    initial_state, modeldata = PALEOmodel.initialize!(model)
+
+    run = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
+
     @time PALEOmodel.ODE.integrate(
         run, initial_state, modeldata, (-1000e6, 0), 
         solvekwargs=(
@@ -83,9 +86,11 @@ end
 
     comparemodel = CompareOutput.copse_output_load("reloaded","original_baseline")
 
-    run = copse_reloaded_bergman2004_expts("bergman2004", ["baseline"])
+    model = copse_reloaded_bergman2004_expts("bergman2004", ["baseline"])
 
-    initial_state, modeldata = PALEOmodel.initialize!(run)
+    initial_state, modeldata = PALEOmodel.initialize!(model)
+
+    run = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
 
     @time PALEOmodel.ODE.integrate(
         run, initial_state, modeldata, (-1000e6, 0), 
@@ -140,10 +145,12 @@ end
 
     comparemodel = CompareOutput.copse_output_load("bergman2004","")
 
-    run = copse_bergman2004_bergman2004_expts(["baseline"])
+    model = copse_bergman2004_bergman2004_expts(["baseline"])
 
-    initial_state, modeldata = PALEOmodel.initialize!(run)
+    initial_state, modeldata = PALEOmodel.initialize!(model)
 
+    run = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
+    
     @time PALEOmodel.ODE.integrate(
         run, initial_state, modeldata, (-600e6, 0),
         solvekwargs=(

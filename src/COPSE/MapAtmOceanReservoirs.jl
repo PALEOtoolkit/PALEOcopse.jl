@@ -128,7 +128,7 @@ end
 
 function PB.register_methods!(rj::ReactionAtmOcean_A)
 
-    CIsotopeType = rj.pars.CIsotope.v
+    CIsotopeType = rj.pars.CIsotope[]
   
     vars = [
         PB.VarStateExplicitScalar("A",          "mol",      "atm-ocean inorganic carbon (CO2 + DIC)",
@@ -167,7 +167,7 @@ function PB.register_methods!(rj::ReactionAtmOcean_A)
             
             PB.VarPropScalar("A_delta", "per mil",  "atm-ocean inorganic carbon (CO2 + DIC) delta13C"),                                    
         ]
-        if rj.pars.delta_atm_ocean.v
+        if rj.pars.delta_atm_ocean[]
             push!(vars_isotope,
                 PB.VarDepScalar("phi", "",  "atmospheric pCO2 fraction"),
                 PB.VarPropScalar("D_atmCO2_A", "per mil", "d13C fractionation between atmospheric CO2 and global DIC+CO2"),
@@ -177,7 +177,7 @@ function PB.register_methods!(rj::ReactionAtmOcean_A)
                 PB.VarPropScalar("DIC_delta", "per mil",  "marine DIC delta 13C"),
             )
         end
-        if !rj.pars.fix_cisotopefrac_T.v
+        if !rj.pars.fix_cisotopefrac_T[]
             push!(vars_isotope, PB.VarDepScalar("TEMP", "K", "global surface temperature"))
         end
         PB.add_method_do!(
@@ -194,6 +194,7 @@ end
 
 function do_AtmOcean_A(
     m::PB.ReactionMethod,
+    pars,
     (vars, ),
     cellrange::PB.AbstractCellRange,
     deltat
@@ -202,16 +203,16 @@ function do_AtmOcean_A(
     
     vars.A_norm[]  = PB.get_total(vars.A[])/rj.norm_value
 
-    if rj.pars.f_atfrac.v == "original"
+    if pars.f_atfrac[] == "original"
         vars.pCO2PAL[]  = vars.A_norm[]
         vars.pCO2atm[]  = vars.pCO2PAL[] * PB.Constants.k_preindCO2atm
         vars.phi[]      = 0.01614
-    elseif rj.pars.f_atfrac.v == "quadratic"
+    elseif pars.f_atfrac[] == "quadratic"
         vars.pCO2PAL[]  = vars.A_norm[]^2
         vars.pCO2atm[]  = vars.pCO2PAL[] * PB.Constants.k_preindCO2atm
         vars.phi[]      = 0.01614*vars.A_norm[]
     else
-        error("unrecognized pars.f_atfrac.v=", rj.pars.f_atfrac.v)
+        error("unrecognized pars.f_atfrac =", pars.f_atfrac[])
     end
 
     return nothing
@@ -219,18 +220,18 @@ end
 
 function do_AtmOcean_A_isotope(
     m::PB.ReactionMethod,
+    pars,
     (vars, ),
     cellrange::PB.AbstractCellRange,
     deltat
 )
-    rj = m.reaction
 
     # fractionation of global reservoir    
     vars.A_delta[] = PB.get_delta(vars.A[])
     
-    if rj.pars.delta_atm_ocean.v
+    if pars.delta_atm_ocean[]
         # fractionations relative to global reservoir
-        if rj.pars.fix_cisotopefrac_T.v
+        if pars.fix_cisotopefrac_T[]
             Tkelvin = 15.0 + PB.Constants.k_CtoK
         else
             Tkelvin = vars.TEMP[]

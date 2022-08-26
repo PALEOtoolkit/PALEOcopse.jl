@@ -44,7 +44,7 @@ function PB.register_methods!(rj::ReactionGlobalTemperatureCK1992)
         PB.VarPropScalar(  "Tgreenhouse", "K", ""),
     ]
        
-    if rj.pars.temp_DAE.v
+    if rj.pars.temp_DAE[]
         push!(vars, PB.VarStateScalar("TEMP", "K", "global surface temperature",
                         attributes=(:initial_value=>PB.Constants.k_CtoK+15.0, ))
         )
@@ -69,17 +69,15 @@ end
 
 
 # Calculate iterative improvement to temperature estimate
-function do_GlobalTemperatureCK1992(m::PB.ReactionMethod, (vars, ), cellrange::PB.AbstractCellRange, deltat)
-
-    rj = m.reaction
+function do_GlobalTemperatureCK1992(m::PB.ReactionMethod, pars, (vars, ), cellrange::PB.AbstractCellRange, deltat)
 
     newT, vars.albedo[], vars.Tgreenhouse[], vars.Teff[] = copse_TempCK1992(
-        vars.SOLAR[], vars.pCO2atm[], vars.TEMP[], fixed_albedo=rj.pars.fixed_albedo.v
+        vars.SOLAR[], vars.pCO2atm[], vars.TEMP[], fixed_albedo=pars.fixed_albedo[]
     )
-    newT += rj.pars.tempcorrect.v
+    newT += pars.tempcorrect[]
 
     # algebraic constraint or iterative improvement to temperature estimate
-    if rj.pars.temp_DAE.v
+    if pars.temp_DAE[]
         vars.TEMP_constraint[] = newT - vars.TEMP[]
     else
         vars.TEMP_sms[] = newT - vars.TEMP[]
@@ -186,9 +184,7 @@ function PB.register_methods!(rj::ReactionGlobalTemperatureBerner)
     return nothing
 end
 
-function do_GlobalTemperatureBerner(m::PB.ReactionMethod, (vars, ), cellrange::PB.AbstractCellRange, deltat)
-   
-    rj = m.reaction
+function do_GlobalTemperatureBerner(m::PB.ReactionMethod, pars, (vars, ), cellrange::PB.AbstractCellRange, deltat)
 
     pCO2PAL = clamp(vars.pCO2PAL[], 1e-3, 1e3) # guess at pCO2PAL limit
     pCO2PAL == vars.pCO2PAL[] ||
@@ -196,8 +192,8 @@ function do_GlobalTemperatureBerner(m::PB.ReactionMethod, (vars, ), cellrange::P
 
     # TL note that this uses its own luminosity (implicitly)
     TEMP = (PB.Constants.k_CtoK + 15.0 +
-            rj.pars.k_c.v*log(pCO2PAL) +
-            rj.pars.k_l.v*vars.tforce[]/570e6)
+            pars.k_c[]*log(pCO2PAL) +
+            pars.k_l[]*vars.tforce[]/570e6)
     
     vars.TEMP[] = clamp(TEMP, PB.Constants.k_CtoK - 50.0, PB.Constants.k_CtoK + 50.0 )  # guess at TEMP limit
     vars.TEMP[] == TEMP ||

@@ -47,29 +47,29 @@ function PB.register_methods!(rj::ReactionLandArea)
         PB.VarPropScalar("BA_AREA",  "",  "Basalt area normalized to present day"),
     ]
 
-    if rj.pars.f_granitearea.v == "Fixed"
+    if rj.pars.f_granitearea[] == "Fixed"
         # no additional Variables needed
-    elseif rj.pars.f_granitearea.v == "Forced"
+    elseif rj.pars.f_granitearea[] == "Forced"
         push!(vars, PB.VarDepScalar("global.GRAN",     "",  "Granite area forcing normalized to present-day"))
-    elseif rj.pars.f_granitearea.v == "OrgEvapForced"
+    elseif rj.pars.f_granitearea[] == "OrgEvapForced"
         push!(vars, PB.VarDepScalar("global.GRAN",     "",  "Granite area forcing normalized to present-day"))
         push!(vars, PB.VarDepScalar("global.ORGEVAP_AREA", "",  "Contribution of silceous and shale_coal areas to overall non-basalt silicate weathering flux"))
     else
-        error("$(PB.fullname(rj)) configuration error invalid f_granitearea=$(rj.pars.f_granitearea.v)")
+        error("$(PB.fullname(rj)) configuration error invalid f_granitearea=$(rj.pars.f_granitearea[])")
     end
 
-    if rj.pars.f_basaltarea.v == "Fixed"
+    if rj.pars.f_basaltarea[] == "Fixed"
         # no additional Variables needed
-    elseif rj.pars.f_basaltarea.v == "Forced"
+    elseif rj.pars.f_basaltarea[] == "Forced"
         push!(vars, PB.VarDepScalar("global.BA",     "",  "Basalt area forcing normalized to present-day"))
-    elseif rj.pars.f_basaltarea.v == "g3_2014_construct_from_lips"
+    elseif rj.pars.f_basaltarea[] == "g3_2014_construct_from_lips"
         push!(vars,
             PB.VarDepScalar("global.CFB_area", "km^2",  "Continental flood basalt area"),
             PB.VarDepScalar("global.DEGASS",   "km^2",  "Normalized degass forcing"),
             PB.VarPropScalar("oib_area",  "km^2",  "Ocean island basalt area"),
         )
     else
-        error("$(PB.fullname(rj)) configuration error invalid f_basaltarea=$(rj.pars.f_basaltarea.v)")
+        error("$(PB.fullname(rj)) configuration error invalid f_basaltarea=$(rj.pars.f_basaltarea[])")
     end  
 
     PB.add_method_do!(rj, do_land_area, (PB.VarList_namedtuple(vars),) )
@@ -77,28 +77,28 @@ function PB.register_methods!(rj::ReactionLandArea)
     return nothing
 end
 
-function do_land_area(m::PB.ReactionMethod, (vars, ), cellrange::PB.AbstractCellRange, deltat)
+function do_land_area(m::PB.ReactionMethod, pars, (vars, ), cellrange::PB.AbstractCellRange, deltat)
     rj = m.reaction
 
-    if rj.pars.f_granitearea.v == "Fixed"
+    if pars.f_granitearea[] == "Fixed"
         vars.GRAN_AREA[] = 1.0
-    elseif rj.pars.f_granitearea.v == "Forced"
+    elseif pars.f_granitearea[] == "Forced"
         vars.GRAN_AREA[] = vars.GRAN[]
-    elseif rj.pars.f_granitearea.v == "OrgEvapForced"
-        vars.GRAN_AREA[] = (1.0-rj.pars.orgevapfrac.v)*vars.GRAN[] + rj.pars.orgevapfrac.v*vars.ORGEVAP_AREA[]
+    elseif pars.f_granitearea[] == "OrgEvapForced"
+        vars.GRAN_AREA[] = (1.0-pars.orgevapfrac[])*vars.GRAN[] + pars.orgevapfrac[]*vars.ORGEVAP_AREA[]
     else
-        error("$(PB.fullname(rj)) configuration error invalid f_granitearea=$(rj.pars.f_granitearea.v)")
+        error("$(PB.fullname(rj)) configuration error invalid f_granitearea=$(pars.f_granitearea[])")
     end
 
-    if rj.pars.f_basaltarea.v == "Fixed"
+    if pars.f_basaltarea[] == "Fixed"
         vars.BA_AREA[]  = 1.0
-    elseif rj.pars.f_basaltarea.v == "Forced"
+    elseif pars.f_basaltarea[] == "Forced"
         vars.BA_AREA[]  = vars.BA[]
-    elseif rj.pars.f_basaltarea.v == "g3_2014_construct_from_lips"
-        vars.oib_area[] = rj.pars.oib_area_scaling.v*vars.DEGASS[]
-        vars.BA_AREA[] = (vars.CFB_area[] + vars.oib_area[])/rj.pars.present_basalt_area.v
+    elseif pars.f_basaltarea[] == "g3_2014_construct_from_lips"
+        vars.oib_area[] = pars.oib_area_scaling[]*vars.DEGASS[]
+        vars.BA_AREA[] = (vars.CFB_area[] + vars.oib_area[])/pars.present_basalt_area[]
     else
-        error("$(PB.fullname(rj)) configuration error invalid f_basaltarea=$(rj.pars.f_basaltarea.v)")
+        error("$(PB.fullname(rj)) configuration error invalid f_basaltarea=$(pars.f_basaltarea[])")
     end  
 
     return nothing

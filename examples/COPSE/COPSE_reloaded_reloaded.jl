@@ -26,7 +26,7 @@ global_logger(ConsoleLogger(stderr,Logging.Info))
 # Baseline Phanerozoic configuration
 # comparemodel = CompareOutput.copse_output_load("reloaded","reloaded_baseline")
 comparemodel = nothing
-run = copse_reloaded_reloaded_expts(
+model = copse_reloaded_reloaded_expts(
     "reloaded",
     ["baseline"],
 )
@@ -35,7 +35,7 @@ tspan=(-1000e6, 0)
 
 # OOE oscillations with VCI and linear mocb
 # comparemodel = CompareOutput.copse_output_load("reloaded","reloaded_baseline")
-# run = copse_reloaded_reloaded_expts(
+# model = copse_reloaded_reloaded_expts(
 #     "reloaded", 
 #     [
 #         "VCI",
@@ -49,15 +49,18 @@ tspan=(-1000e6, 0)
 # Integrate model
 ###########################################
 
-initial_state, modeldata = PALEOmodel.initialize!(run)
+initial_state, modeldata = PALEOmodel.initialize!(model)
 
 # call ODE function to check derivative
 initial_deriv = similar(initial_state)
-PALEOmodel.ODE.ModelODE(modeldata)(initial_deriv, initial_state , (run=run, modeldata=modeldata), 0.0)
+PALEOmodel.SolverFunctions.ModelODE(modeldata)(initial_deriv, initial_state , nothing, 0.0)
 println("initial_state", initial_state)
 println("initial_deriv", initial_deriv)
 
 println("integrate, no jacobian")
+
+run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
+
 @time PALEOmodel.ODE.integrate(
     run, initial_state, modeldata, tspan, 
     solvekwargs=( # https://diffeq.sciml.ai/stable/basics/common_solver_opts/

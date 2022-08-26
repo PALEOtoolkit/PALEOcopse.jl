@@ -60,7 +60,7 @@ function PB.register_methods!(rj::ReactionMarineBiotaCOPSE)
     state_varnames = [
         ("P",                   "mol P",    "Marine phosphorus"),         
     ]   
-    if rj.pars.f_ncycle.v
+    if rj.pars.f_ncycle[]
         push!(state_varnames, ("N",               "mol N",    "Marine nitrogen"))
     end
     vars_res, vars_sms, vars_dep_res = PB.Reservoirs.ReservoirLinksVector(
@@ -86,7 +86,7 @@ function PB.register_methods!(rj::ReactionMarineBiotaCOPSE)
         ("OX_relative",    "",        "marine oxic fraction relative to present day fraction 'k1_oxfrac'"),
     ]
 
-    if rj.pars.f_ncycle.v
+    if rj.pars.f_ncycle[]
         push!(varnames_prop_react,
             ("Nconc",   "molN/kgsw",  "marine N conc"),
             ("nfix",    "molN/yr",    "marine nitrogen fixation"),
@@ -117,8 +117,7 @@ end
 
 
 # Calculate rates
-function do_marinebiota(m::PB.ReactionMethod,  (S, D), cellrange::PB.AbstractCellRange, deltat)
-    pars = m.reaction.pars
+function do_marinebiota(m::PB.ReactionMethod, pars, (S, D), cellrange::PB.AbstractCellRange, deltat)
    
     # convert marine nutrient reservoir moles to micromoles/kg concentration
     D.Pconc[] = D.P_norm[] * 2.2  
@@ -128,47 +127,47 @@ function do_marinebiota(m::PB.ReactionMethod,  (S, D), cellrange::PB.AbstractCel
     # N0 = S.N.norm_value
     P0 = S.P[]/D.P_norm[]
 
-    if pars.f_ncycle.v
+    if pars.f_ncycle[]
         D.Nconc[] = D.N_norm[] * 30.9 ;
         N0 = S.N[]/D.N_norm[]
         D.newp[] = 117.0 * min(D.Nconc[]/16.0, D.Pconc[])
     else
         D.newp[] = 117.0 * D.Pconc[]
     end
-    D.newp_relative[] = D.newp[]/pars.newp0.v
+    D.newp_relative[] = D.newp[]/pars.newp0[]
 
     #%%%%%% OCEAN ANOXIC FRACTION
-    if      pars.f_anoxia.v == "original"
-        D.ANOX[] = max( 1.0 - pars.k1_oxfrac.v*D.pO2PAL[]/D.newp_relative[], 0.0 )
-    elseif  pars.f_anoxia.v == "newanoxia"
-        D.ANOX[] = 1/(1 + exp(-pars.k_logistic.v*(pars.k_uptake.v*D.newp_relative[]-D.pO2PAL[]) ) )
+    if      pars.f_anoxia[] == "original"
+        D.ANOX[] = max( 1.0 - pars.k1_oxfrac[]*D.pO2PAL[]/D.newp_relative[], 0.0 )
+    elseif  pars.f_anoxia[] == "newanoxia"
+        D.ANOX[] = 1/(1 + exp(-pars.k_logistic[]*(pars.k_uptake[]*D.newp_relative[]-D.pO2PAL[]) ) )
     else
-        error("unknown f_anoxia ", pars.f_anoxia.v)
+        error("unknown f_anoxia ", pars.f_anoxia[])
     end
-    D.OX_relative[] = (1.0 - D.ANOX[])/pars.k1_oxfrac.v   
+    D.OX_relative[] = (1.0 - D.ANOX[])/pars.k1_oxfrac[]   
 
     #%%%%% nitrogen cycle
-    if pars.f_ncycle.v
+    if pars.f_ncycle[]
         if (S.N[]/16.0) < S.P[] 
-            D.nfix[] = pars.k3_nfix.v *( ( S.P[] - S.N[]/16.0 ) / ( P0  - N0/16.0) )^pars.f_nfix_power.v
+            D.nfix[] = pars.k3_nfix[] *( ( S.P[] - S.N[]/16.0 ) / ( P0  - N0/16.0) )^pars.f_nfix_power[]
         else
-            if   pars.f_nfix_nreplete.v == "Off" # Surely more defensible ?
+            if   pars.f_nfix_nreplete[] == "Off" # Surely more defensible ?
                 D.nfix[] = 0.0
-            elseif pars.f_nfix_nreplete.v == "Sign" # SD - COPSE 5_14 C code has this (?!)
-                D.nfix[] = pars.k3_nfix.v *( - ( S.P[] - S.N[]/16.0 ) / ( P0  - N0/16.0)  )^pars.f_nfix_power.v
+            elseif pars.f_nfix_nreplete[] == "Sign" # SD - COPSE 5_14 C code has this (?!)
+                D.nfix[] = pars.k3_nfix[] *( - ( S.P[] - S.N[]/16.0 ) / ( P0  - N0/16.0)  )^pars.f_nfix_power[]
                 print("COPSE_equations -ve nfix (check pars.f_nfix_nreplete) tmodel ", D.tforce[])
             else
-                error("unrecognized f_nfix_nreplete ", pars.f_nfix_nreplete.v)
+                error("unrecognized f_nfix_nreplete ", pars.f_nfix_nreplete[])
             end
         end
         # Denitrification 
-        if pars.f_denit.v == "original" # NB: COPSE 5_14 uses copse_crash to limit at low N
-            D.denit[] = (pars.k4_denit.v * (1.0 + D.ANOX[] / (1.0 - pars.k1_oxfrac.v) ) *
+        if pars.f_denit[] == "original" # NB: COPSE 5_14 uses copse_crash to limit at low N
+            D.denit[] = (pars.k4_denit[] * (1.0 + D.ANOX[] / (1.0 - pars.k1_oxfrac[]) ) *
                         PALEOcopse.COPSE.copse_crash(D.N_norm[], "denit", D.tforce[]))
-        elseif  pars.f_denit.v == "new" # introduce dependency on [NO3] throughout
-            D.denit[] = pars.k4_denit.v * (1.0 + D.ANOX[] / (1.0 - pars.k1_oxfrac.v)) * D.N_norm[]
+        elseif  pars.f_denit[] == "new" # introduce dependency on [NO3] throughout
+            D.denit[] = pars.k4_denit[] * (1.0 + D.ANOX[] / (1.0 - pars.k1_oxfrac[])) * D.N_norm[]
         else
-            error("unknown f_denit ", pars.f_denit.v)
+            error("unknown f_denit ", pars.f_denit[])
         end
 
         S.N_sms[] += D.nfix[] - D.denit[]
@@ -275,9 +274,9 @@ end
 function PB.register_methods!(rj::ReactionOceanBurialCOPSE)
 
     # isotope Types
-    CIsotopeType = rj.pars.CIsotope.v
-    if rj.pars.enableS.v
-        SIsotopeType = rj.pars.SIsotope.v
+    CIsotopeType = rj.pars.CIsotope[]
+    if rj.pars.enableS[]
+        SIsotopeType = rj.pars.SIsotope[]
     else
         SIsotopeType = PB.ScalarData
     end
@@ -288,7 +287,7 @@ function PB.register_methods!(rj::ReactionOceanBurialCOPSE)
         ("(DIC::$CIsotopeType)",    "mol C",    "ocean inorganic carbon"),    
         ("(CAL)",               "mol Ca",   "Marine calcium"),
     ]
-    if rj.pars.enableS.v
+    if rj.pars.enableS[]
         push!(state_varnames, ("S::$SIsotopeType",      "mol S",    "Marine sulphate"))
     end
     vars_res, vars_sms, vars_dep_res = PB.Reservoirs.ReservoirLinksVector(
@@ -296,10 +295,10 @@ function PB.register_methods!(rj::ReactionOceanBurialCOPSE)
     )
 
     # additional fluxes where we don't require the values of the state variable 
-    if rj.pars.f_ncycle.v
+    if rj.pars.f_ncycle[]
         push!(vars_sms, PB.VarContribScalar("N_sms", "mol N yr-1", "Marine nitrogen source - sink"))
     end
-    if rj.pars.enableS.v && rj.pars.SRedoxAlk.v
+    if rj.pars.enableS[] && rj.pars.SRedoxAlk[]
         push!(vars_sms, PB.VarContribScalar("TAlk_sms", "mol TAlk yr-1", "Marine total alkalinity source - sink"))
     end
 
@@ -334,10 +333,10 @@ function PB.register_methods!(rj::ReactionOceanBurialCOPSE)
         ("CPsea",   "",           "marine C:P ratio"),
         ("mocb",   "molC/yr",     "Marine organic carbon burial"),       
     ]
-    if rj.pars.enableS.v
+    if rj.pars.enableS[]
         push!(varnames_prop_react, ("D_mpsb", "per mil",     "D34S fractionation pyrite - marine sulphate"))
     end
-    if rj.pars.f_ncycle.v
+    if rj.pars.f_ncycle[]
         push!(varnames_prop_react,
             ("monb",   "molN/yr",     "Marine organic N burial"),
         )
@@ -349,7 +348,7 @@ function PB.register_methods!(rj::ReactionOceanBurialCOPSE)
         "Corg::$CIsotopeType", 
         "Porg", "Pauth", "PFe", "P", 
     ]
-    if rj.pars.enableS.v
+    if rj.pars.enableS[]
         push!(burial_fluxnames, "GYP::$SIsotopeType", "PYR::$SIsotopeType")
     end
 
@@ -383,22 +382,22 @@ end
 
 
 # Calculate rates
-function do_react(m::PB.ReactionMethod,  (fluxOceanBurial, S, D), cellrange::PB.AbstractCellRange, deltat)
-    pars = m.reaction.pars
+function do_react(m::PB.ReactionMethod, pars, (fluxOceanBurial, S, D), cellrange::PB.AbstractCellRange, deltat)
+
     (CIsotopeType, SIsotopeType) = m.p
 
     #%%%%% Reduced C species burial
     # Marine organic carbon burial
-    if      pars.f_mocb.v == "original"
-        D.mocb[]                = pars.k2_mocb.v * D.newp_relative[]^pars.f_mocb_b.v
-    elseif  pars.f_mocb.v == "Uforced"
-        D.mocb[]                = pars.k2_mocb.v * D.newp_relative[]^pars.f_mocb_b.v * D.UPLIFT[]
-    elseif  pars.f_mocb.v == "O2dep"
-        D.mocb[]                = pars.k2_mocb.v * D.newp_relative[]^pars.f_mocb_b.v * 2.1276*exp(-0.755*D.pO2PAL[])
-    elseif  pars.f_mocb.v == "both"
-        D.mocb[]                = pars.k2_mocb.v * D.newp_relative[]^pars.f_mocb_b.v * D.UPLIFT[] * 2.1276*exp(-0.755*D.pO2PAL[])
+    if      pars.f_mocb[] == "original"
+        D.mocb[]                = pars.k2_mocb[] * D.newp_relative[]^pars.f_mocb_b[]
+    elseif  pars.f_mocb[] == "Uforced"
+        D.mocb[]                = pars.k2_mocb[] * D.newp_relative[]^pars.f_mocb_b[] * D.UPLIFT[]
+    elseif  pars.f_mocb[] == "O2dep"
+        D.mocb[]                = pars.k2_mocb[] * D.newp_relative[]^pars.f_mocb_b[] * 2.1276*exp(-0.755*D.pO2PAL[])
+    elseif  pars.f_mocb[] == "both"
+        D.mocb[]                = pars.k2_mocb[] * D.newp_relative[]^pars.f_mocb_b[] * D.UPLIFT[] * 2.1276*exp(-0.755*D.pO2PAL[])
     else
-        error("unknown f_mocb ", pars.f_mocb.v)
+        error("unknown f_mocb ", pars.f_mocb[])
     end
     if CIsotopeType <: PB.AbstractIsotopeScalar
         # delta of marine organic carbon burial
@@ -413,40 +412,40 @@ function do_react(m::PB.ReactionMethod,  (fluxOceanBurial, S, D), cellrange::PB.
     fluxOceanBurial.Corg[]  += mocb_isotope    
 
     #%%%% CP ratio
-    if   pars.f_CPsea.v == "Fixed"
-        D.CPsea[] = pars.CPsea0.v
-    elseif pars.f_CPsea.v == "VCI"  # NB typo in Bergman (2004) has dependency reversed
-        D.CPsea[] = (pars.f_CPsea_VCI_oxic.v*pars.f_CPsea_VCI_anoxic.v /
-            ((1.0-D.ANOX[])*pars.f_CPsea_VCI_anoxic.v + D.ANOX[]*pars.f_CPsea_VCI_oxic.v))
+    if   pars.f_CPsea[] == "Fixed"
+        D.CPsea[] = pars.CPsea0[]
+    elseif pars.f_CPsea[] == "VCI"  # NB typo in Bergman (2004) has dependency reversed
+        D.CPsea[] = (pars.f_CPsea_VCI_oxic[]*pars.f_CPsea_VCI_anoxic[] /
+            ((1.0-D.ANOX[])*pars.f_CPsea_VCI_anoxic[] + D.ANOX[]*pars.f_CPsea_VCI_oxic[]))
     else
-        error("unrecognized f_CPsea ", pars.f_CPsea.v)
+        error("unrecognized f_CPsea ", pars.f_CPsea[])
     end
 
     # Marine organic P burial
     mopb                    = (D.mocb[]/D.CPsea[])
     # Marine carbonate-associated P burial
-    if      pars.f_capb.v == "original"
-        capb                = pars.k7_capb.v * (D.newp_relative[]^pars.f_mocb_b.v)
-    elseif  pars.f_capb.v == "redox"
-        capb                = (pars.k7_capb.v * (D.newp_relative[]^pars.f_mocb_b.v)
+    if      pars.f_capb[] == "original"
+        capb                = pars.k7_capb[] * (D.newp_relative[]^pars.f_mocb_b[])
+    elseif  pars.f_capb[] == "redox"
+        capb                = (pars.k7_capb[] * (D.newp_relative[]^pars.f_mocb_b[])
                                     *(0.5+0.5*D.OX_relative[]))
     else
-        error("unknown f_capb ", pars.f_capb.v)
+        error("unknown f_capb ", pars.f_capb[])
     end
     # Marine Fe-sorbed P burial NB: COPSE 5_14 uses copse_crash to limit at low P
-    if      pars.f_fepb.v == "original"
-        fepb = (pars.k6_fepb.v*D.OX_relative[] *
+    if      pars.f_fepb[] == "original"
+        fepb = (pars.k6_fepb[]*D.OX_relative[] *
                 PALEOcopse.COPSE.copse_crash(D.P_norm[], "fepb", D.tforce[]) )
-    elseif  pars.f_fepb.v == "Dforced"
-        fepb = D.DEGASS[]*(pars.k6_fepb.v*D.OX_relative[] *
+    elseif  pars.f_fepb[] == "Dforced"
+        fepb = D.DEGASS[]*(pars.k6_fepb[]*D.OX_relative[] *
                 PALEOcopse.COPSE.copse_crash(D.P_norm[], "fepb", D.tforce[]) )
-    elseif  pars.f_fepb.v == "sfw"
-        fepb = D.sfw_relative[]*(pars.k6_fepb.v*D.OX_relative[] *
+    elseif  pars.f_fepb[] == "sfw"
+        fepb = D.sfw_relative[]*(pars.k6_fepb[]*D.OX_relative[] *
                                 PALEOcopse.COPSE.copse_crash(D.P_norm[], "fepb", D.tforce[]) )
-    elseif  pars.f_fepb.v == "pdep"
-        fepb = pars.k6_fepb.v*D.OX_relative[]*D.P_norm[]
+    elseif  pars.f_fepb[] == "pdep"
+        fepb = pars.k6_fepb[]*D.OX_relative[]*D.P_norm[]
     else
-        error("unknown f_fepb ", pars.f_fepb.v)
+        error("unknown f_fepb ", pars.f_fepb[])
     end
 
     totpb                   = mopb + capb + fepb    
@@ -458,37 +457,37 @@ function do_react(m::PB.ReactionMethod,  (fluxOceanBurial, S, D), cellrange::PB.
     fluxOceanBurial.PFe[]   +=  fepb
     fluxOceanBurial.P[]     +=  totpb
 
-    if pars.f_ncycle.v
+    if pars.f_ncycle[]
         # Marine organic nitrogen burial
-        D.monb[]                = D.mocb[]/pars.CNsea0.v
+        D.monb[]                = D.mocb[]/pars.CNsea0[]
         # update tendencies, no external flux
         S.N_sms[]               += - D.monb[]
     end
 
     # Marine sulphur burial
-    if pars.enableS.v
+    if pars.enableS[]
         if SIsotopeType <: PB.AbstractIsotopeScalar
             # Pyrite sulphur isotope fractionation relative to sulphate and gypsum
-            if pars.f_sisotopefrac.v == "fixed"
+            if pars.f_sisotopefrac[] == "fixed"
                 D.D_mpsb[] = 35.0
-            elseif pars.f_sisotopefrac.v == "copse_O2"
+            elseif pars.f_sisotopefrac[] == "copse_O2"
                 D.D_mpsb[] = 35.0*D.O_norm[]
             else
-                error("unknown f_sisotopefrac ", pars.f_sisotopefrac.v)
+                error("unknown f_sisotopefrac ", pars.f_sisotopefrac[])
             end
         end
 
         # Marine gypsum sulphur burial
-        mgsb                    = pars.k_mgsb.v * D.S_norm[] * D.CAL_norm[]
+        mgsb                    = pars.k_mgsb[] * D.S_norm[] * D.CAL_norm[]
         mgsb_isotope            = @PB.isotope_totaldelta(SIsotopeType, mgsb, D.S_delta[])    
 
         # Marine pyrite sulphur burial
-        if pars.f_pyrburial.v == "copse_noO2"  # dependent on sulphate and marine carbon burial
-            mpsb                    = pars.k_mpsb.v*D.S_norm[]*(D.mocb[]/pars.k2_mocb.v)
-        elseif pars.f_pyrburial.v == "copse_O2"   # dependent on oxygen, sulphate, and marine carbon burial
-            mpsb                    = pars.k_mpsb.v*D.S_norm[]/D.O_norm[]*(D.mocb[]/pars.k2_mocb.v)
+        if pars.f_pyrburial[] == "copse_noO2"  # dependent on sulphate and marine carbon burial
+            mpsb                    = pars.k_mpsb[]*D.S_norm[]*(D.mocb[]/pars.k2_mocb[])
+        elseif pars.f_pyrburial[] == "copse_O2"   # dependent on oxygen, sulphate, and marine carbon burial
+            mpsb                    = pars.k_mpsb[]*D.S_norm[]/D.O_norm[]*(D.mocb[]/pars.k2_mocb[])
         else
-            error("unknown f_pyrburial ", pars.f_pyrburial.v)
+            error("unknown f_pyrburial ", pars.f_pyrburial[])
         end
         mpsb_isotope            = @PB.isotope_totaldelta(SIsotopeType, mpsb, D.S_delta[] - D.D_mpsb[])
 
@@ -498,7 +497,7 @@ function do_react(m::PB.ReactionMethod,  (fluxOceanBurial, S, D), cellrange::PB.
         PB.add_if_available(S.CAL_sms, -mgsb)   # CAL is optional (eg not used in COPSE reloaded configs)
         S.O_sms[]               += 2*mpsb
 
-        if pars.SRedoxAlk.v
+        if pars.SRedoxAlk[]
             S.TAlk_sms[] += 2*D.mpsb[]
         end
 
