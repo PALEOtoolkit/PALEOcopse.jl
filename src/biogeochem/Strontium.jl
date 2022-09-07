@@ -355,7 +355,7 @@ function PB.register_methods!(rj::ReactionSrOceanfloor)
            
         PB.VarDepScalar("ocean.Sr_norm",        "",         "normalized ocean Sr"),
         PB.VarDep("ocean.oceanfloor.Sr_delta",  "",         "ocean d87Sr"), 
-        PB.VarDep("sedcrust.Sr_mantle_delta",   "",         "mantle d87Sr"), 
+        PB.VarDepScalar("sedcrust.Sr_mantle_delta",   "",         "mantle d87Sr"), 
     ]
 
     PB.add_method_do!(
