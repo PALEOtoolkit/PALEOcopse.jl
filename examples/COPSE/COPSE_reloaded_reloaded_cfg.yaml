@@ -8,6 +8,8 @@ model1:
         SrIsotope: IsotopeLinear
         CIsotopeReacts: true
         tforcevar: global.tforce
+        const_O: false
+        const_A: false
     domains:
         fluxAtoLand:
             
@@ -269,6 +271,7 @@ model1:
                         A:initial_delta:        0.0  # per mil
                     parameters:
                         f_atfrac:   quadratic
+                        const: external%const_A
                     variable_links:
                         TEMP:                   global.TEMP
                         pCO2*:                  atm.pCO2*
@@ -279,7 +282,8 @@ model1:
 
                 reservoir_O:
                     class: ReactionAtmOcean_O
-
+                    parameters:
+                        const: external%const_O
                     variable_attributes:
                         O:norm_value:           3.7e19
                         O:initial_value:        3.7e19

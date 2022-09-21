@@ -1,8 +1,5 @@
 
 
-import PALEOboxes as PB
-import PALEOmodel
-
 function copse_bergman2004_bergman2004_expts(
     expts;   
     modelpars=Dict{}(),

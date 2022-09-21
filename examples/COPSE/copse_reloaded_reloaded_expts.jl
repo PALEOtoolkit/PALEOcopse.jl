@@ -1,9 +1,4 @@
 
-import PALEOboxes as PB
-
-import PALEOmodel
-
-
 function copse_reloaded_reloaded_expts(
     basemodel, expts;
     modelpars=Dict{}(),
@@ -66,10 +61,15 @@ function copse_reloaded_reloaded_expts(
             PB.set_parameter_value!(model, "ocean", "marinebiota_copse", "f_ncycle", false)
             PB.set_parameter_value!(model, "ocean", "oceanburial_copse", "f_ncycle", false)
 
-        elseif length(expt) == 5 && expt[1] == "setpar"
-            # generic parameter set (setpar, <domain>, <reaction>, <parname>, <parvalue)
+        elseif length(expt) == 5 && expt[1] == "set_par"
+            # generic parameter set (set_par, <domain>, <reaction>, <parname>, <parvalue)
             _, domname, reactname, parname, parvalue = expt            
             PB.set_parameter_value!(model, domname, reactname, parname, parvalue)
+
+        elseif length(expt) == 4 && expt[1] == "set_initial_value"
+            # generic :initial_value set (set_initial_value, <domain>, <varname>, <initial_value)
+            _, domname, varname, initial_value = expt            
+            PB.set_variable_attribute!(model, domname, varname, :initial_value, initial_value)
 
         elseif length(expt)==4 && expt[1] == "CO2pulse"
             _, size, pstart, duration = expt # (_, mol C, yr, yr)

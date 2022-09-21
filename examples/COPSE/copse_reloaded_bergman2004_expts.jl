@@ -1,6 +1,4 @@
 
-import PALEOboxes as PB
-import PALEOmodel
 
 function copse_reloaded_bergman2004_expts(
     basemodel, expts;

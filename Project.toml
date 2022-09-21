@@ -1,15 +1,17 @@
 name = "PALEOcopse"
 uuid = "4a6ed817-0e58-48c6-8452-9e9afc8cb508"
 authors = ["sd336 "]
-version = "0.4.3"
+version = "0.4.4"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
 PALEOboxes = "804b410e-d900-4b2a-9ecd-f5a06d4c1fd4"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+SnoopPrecompile = "66db9d55-30c0-4569-8b51-7e840670fc0c"
 TestEnv = "1e6cf692-eddd-4d53-88a5-2d735e33781b"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
@@ -23,6 +25,7 @@ PALEOboxes = "0.20.4, 0.21"
 PALEOmodel = "0.15.8"
 Plots = "1.0"
 Roots = "1.0, 2.0"
+SnoopPrecompile = "1.0"
 TestEnv = "1.0"
 XLSX = "0.7, 0.8"
 julia = "1.6"

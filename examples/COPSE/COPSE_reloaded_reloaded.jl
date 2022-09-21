@@ -22,7 +22,6 @@ global_logger(ConsoleLogger(stderr,Logging.Info))
 # load archived model output 
 # comparemodel=nothing
 
-
 # Baseline Phanerozoic configuration
 # comparemodel = CompareOutput.copse_output_load("reloaded","reloaded_baseline")
 comparemodel = nothing
@@ -32,15 +31,23 @@ model = copse_reloaded_reloaded_expts(
 )
 tspan=(-1000e6, 0)
 
+# Fix oxygen
+# comparemodel = nothing
+# model = copse_reloaded_reloaded_expts(
+#     "reloaded",
+#     ["baseline", ("set_initial_value", "atmocean", "O", 3.7e19)],
+#     modelpars=Dict("const_O"=>true),
+# )
+# tspan=(-1000e6, 0)
 
 # OOE oscillations with VCI and linear mocb
-# comparemodel = CompareOutput.copse_output_load("reloaded","reloaded_baseline")
+# comparemodel = nothing
 # model = copse_reloaded_reloaded_expts(
 #     "reloaded", 
 #     [
 #         "VCI",
 #         "mocbProdLinear",
-#         ("setpar", "global", "force_LIPs", "co2releasefield", "CO2max"),
+#         ("set_par", "global", "force_LIPs", "co2releasefield", "CO2max"),
 #     ],
 # ) 
 # tspan=(-1000e6, 1e6)
@@ -75,8 +82,6 @@ run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory
 # @time PALEOmodel.ODE.integrateForwardDiff(run, initial_state, modeldata, (-1000e6, 0), jac_ad_t_sparsity=0.0, solvekwargs=(reltol=1e-5,))
                                    
 # PB.TestUtils.bench_model(run.model)
-
-
 
 ##############################
 # Plot output
