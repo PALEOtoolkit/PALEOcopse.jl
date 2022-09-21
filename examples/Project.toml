@@ -14,5 +14,4 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]
-PALEOboxes = "0.20.4"
 PALEOmodel = "0.15.8"

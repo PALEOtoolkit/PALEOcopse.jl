@@ -22,21 +22,18 @@ $(PARS)
 # Methods and Variables
 $(METHODS_DO)
 """
-Base.@kwdef mutable struct ReactionAtmOcean_O <:  PB.AbstractReaction
+Base.@kwdef mutable struct ReactionAtmOcean_O{P} <:  PB.AbstractReaction
     base::PB.ReactionBase
+
+    pars::P = PB.ParametersTuple(
+        PB.ParBool("const", false,
+            description="true to provide constant value, ignoring fluxes from _sms Variable"),
+    )
 
     norm_value::Float64 = NaN
 end
 
 function PB.register_methods!(rj::ReactionAtmOcean_O)
-
-    vars = [
-        PB.VarStateExplicitScalar(  "O",            "mol",      "atm-ocean oxygen"),
-        PB.VarDerivScalar(          "O_sms",        "mol yr-1", "atm-ocean oxygen source-sinks"),
-        PB.VarPropScalar(           "O_norm",       "",         "atm-ocean normalized"),
-        PB.VarPropScalar(           "pO2atm",   "atm",      "atmospheric pO2"),
-        PB.VarPropScalar(           "pO2PAL",   "",         "atmospheric pO2 normalized to present day"),
-    ]
 
     # callback function to store Variable norm during setup
     function setup_callback(m, attribute_value, v, vdata)
@@ -47,7 +44,31 @@ function PB.register_methods!(rj::ReactionAtmOcean_O)
         return nothing
     end
 
-    PB.add_method_setup_initialvalue_vars_default!(rj, vars, setup_callback=setup_callback)  # initialise state variables 
+    if rj.pars.const[]
+        O = PB.VarPropScalar(           "O",        "mol",      "atm-ocean oxygen")
+        O_sms = PB.VarTargetScalar(     "O_sms",    "mol yr-1", "atm-ocean oxygen source-sinks")
+        PB.add_method_setup_initialvalue_vars_default!(
+            rj, [O], 
+            filterfn = v->true, # force setup even though O is not a state Variable
+            force_initial_norm_value=true, # force initialize as a state variable including :norm_value, even though O is not a state Variable
+            setup_callback=setup_callback
+        )
+    else
+        O = PB.VarStateExplicitScalar(  "O",        "mol",      "atm-ocean oxygen")
+        O_sms = PB.VarDerivScalar(      "O_sms",    "mol yr-1", "atm-ocean oxygen source-sinks")
+        PB.add_method_setup_initialvalue_vars_default!(rj, [O], setup_callback=setup_callback)  # initialise state variables 
+    end
+    PB.setfrozen!(rj.pars.const) # prevent modification
+
+    # sms variable not used by us, but must appear in a method to be linked and created
+    PB.add_method_do_nothing!(rj, [O_sms])
+
+    vars = [
+        O,
+        PB.VarPropScalar(           "O_norm",       "",         "atm-ocean normalized"),
+        PB.VarPropScalar(           "pO2atm",   "atm",      "atmospheric pO2"),
+        PB.VarPropScalar(           "pO2PAL",   "",         "atmospheric pO2 normalized to present day"),
+    ]
 
     PB.add_method_do!(
         rj,
@@ -117,6 +138,8 @@ Base.@kwdef mutable struct ReactionAtmOcean_A{P} <:  PB.AbstractReaction
             description="calculate d13CO2, d13DIC relative to A"),
         PB.ParBool("fix_cisotopefrac_T", false,
             description="remove temperature dependence of d13CO2, d13DIC relative to A"),
+        PB.ParBool("const", false,
+            description="true to provide constant value, ignoring fluxes from _sms Variable"),
         PB.ParType(PB.AbstractData, "CIsotope", PB.ScalarData,
             external=true,
             allowed_values=PB.IsotopeTypes,
@@ -130,17 +153,6 @@ function PB.register_methods!(rj::ReactionAtmOcean_A)
 
     CIsotopeType = rj.pars.CIsotope[]
   
-    vars = [
-        PB.VarStateExplicitScalar("A",          "mol",      "atm-ocean inorganic carbon (CO2 + DIC)",
-            attributes=(:field_data=>CIsotopeType,)),
-        PB.VarDerivScalar(        "A_sms",      "mol yr-1", "atm-ocean inorganic carbon (CO2 + DIC) source-sinks",
-            attributes=(:field_data=>CIsotopeType,)),
-        PB.VarPropScalar(         "A_norm",     "",         "atm-ocean inorganic carbon (CO2 + DIC) normalized to present day"),
-        PB.VarPropScalar(         "pCO2atm","atm",      "atmospheric pCO2"),
-        PB.VarPropScalar(         "pCO2PAL","",         "atmospheric pCO2 normalized to present day"),
-        PB.VarPropScalar(         "phi",        "",         "atmospheric pCO2 fraction"),
-    ]
-
     # callback function to store Variable norm during setup
     function setup_callback(m, attribute_value, v, vdata)
         v.localname == "A" || error("setup_callback unexpected Variable $(PB.fullname(v))")
@@ -150,21 +162,46 @@ function PB.register_methods!(rj::ReactionAtmOcean_A)
         return nothing
     end
 
-    PB.add_method_setup_initialvalue_vars_default!(rj, vars, setup_callback=setup_callback)  # initialise state variables 
+    if rj.pars.const[]
+        A = PB.VarPropScalar(           "A",          "mol",      "atm-ocean inorganic carbon (CO2 + DIC)",
+            attributes=(:field_data=>CIsotopeType,))
+        A_sms = PB.VarTargetScalar(     "A_sms",      "mol yr-1", "atm-ocean inorganic carbon (CO2 + DIC) source-sinks",
+            attributes=(:field_data=>CIsotopeType,))
+        PB.add_method_setup_initialvalue_vars_default!(
+            rj, [A], 
+            filterfn = v->true, # force setup even though A is not a state Variable
+            force_initial_norm_value=true, # force initialize as a state variable including :norm_value, even though A is not a state Variable
+            setup_callback=setup_callback
+        )
+    else
+        A = PB.VarStateExplicitScalar(  "A",          "mol",      "atm-ocean inorganic carbon (CO2 + DIC)",
+            attributes=(:field_data=>CIsotopeType,))
+        A_sms = PB.VarDerivScalar(      "A_sms",      "mol yr-1", "atm-ocean inorganic carbon (CO2 + DIC) source-sinks",
+            attributes=(:field_data=>CIsotopeType,))
+        PB.add_method_setup_initialvalue_vars_default!(rj, [A], setup_callback=setup_callback)  # initialise state variables 
+    end
+    PB.setfrozen!(rj.pars.const) # prevent modification
+    
+    # sms variable not used by us, but must appear in a method to be linked and created
+    PB.add_method_do_nothing!(rj, [A_sms])
 
-    norm_value = NaN # will be updated in prepare_
+    vars = [
+        A,
+        PB.VarPropScalar(         "A_norm",     "",         "atm-ocean inorganic carbon (CO2 + DIC) normalized to present day"),
+        PB.VarPropScalar(         "pCO2atm","atm",      "atmospheric pCO2"),
+        PB.VarPropScalar(         "pCO2PAL","",         "atmospheric pCO2 normalized to present day"),
+        PB.VarPropScalar(         "phi",        "",         "atmospheric pCO2 fraction"),
+    ]
+
     PB.add_method_do!(
         rj,
         do_AtmOcean_A, 
         (PB.VarList_namedtuple(vars),), 
     )
 
-
     if CIsotopeType <: PB.AbstractIsotopeScalar
         vars_isotope = [
-            PB.VarDepScalar("A",          "mol",      "atm-ocean inorganic carbon (CO2 + DIC)",
-                attributes=(:field_data=>CIsotopeType,)),
-            
+            PB.VarDep(A),            
             PB.VarPropScalar("A_delta", "per mil",  "atm-ocean inorganic carbon (CO2 + DIC) delta13C"),                                    
         ]
         if rj.pars.delta_atm_ocean[]
