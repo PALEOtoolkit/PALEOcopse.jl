@@ -21,17 +21,17 @@ import PALEOcopse
     @test PB.get_length(global_domain) == 1
 
     modeldata = PB.create_modeldata(model)
-    PB.allocate_variables!(model, modeldata, hostdep=false)
+    PB.allocate_variables!(model, modeldata, 1, hostdep=false)
     @test PB.check_ready(model, modeldata, throw_on_error=false) == false
 
     # state and sms variables
-    PB.allocate_variables!(model, modeldata, hostdep=true)
+    PB.allocate_variables!(model, modeldata, 1, hostdep=true)
     @test PB.check_ready(model, modeldata) == true
     PALEOmodel.set_default_solver_view!(model, modeldata) # also (re)allocates tforce
 
     modelcreated_vars_dict = Dict([(var.name, var) for var in PB.get_variables(global_domain, hostdep=false)])
 
-    PB.initialize_reactiondata!(model, modeldata)    
+    PB.initialize_reactiondata!(model, modeldata; create_dispatchlists_all=true)    
       
     @info "dispatch_setup"
     PB.dispatch_setup(model, :setup, modeldata)

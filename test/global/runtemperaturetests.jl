@@ -15,11 +15,11 @@ import PALEOcopse
     @test PB.get_length(global_domain) == 1
 
     modeldata = PB.create_modeldata(model)
-    PB.allocate_variables!(model, modeldata, hostdep=false)
-    @test length(PB.get_unallocated_variables(global_domain, modeldata)) == 3
+    PB.allocate_variables!(model, modeldata, 1, hostdep=false)
+    @test length(PB.get_unallocated_variables(global_domain, modeldata, 1)) == 3
     @test PB.check_ready(model, modeldata, throw_on_error=false) == false
     # allocate state and sms variables
-    PB.allocate_variables!(model, modeldata, hostdep=true)   
+    PB.allocate_variables!(model, modeldata, 1, hostdep=true)   
     PALEOmodel.set_default_solver_view!(model, modeldata)
     @test PB.check_ready(model, modeldata) == true
 
@@ -30,7 +30,7 @@ import PALEOcopse
     @test length(hostdep_vars_vec) == 3
     hostdep_data = Dict(var.name=>PB.get_data(var, modeldata) for var in hostdep_vars_vec)
 
-    PB.initialize_reactiondata!(model, modeldata)
+    PB.initialize_reactiondata!(model, modeldata; create_dispatchlists_all=true)
  
     # check Reaction configuration
     PB.check_configuration(model)
