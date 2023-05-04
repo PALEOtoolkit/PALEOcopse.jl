@@ -1,6 +1,6 @@
 module PALEOcopse
 
-import SnoopPrecompile
+import PrecompileTools
 
 import Logging
 import PALEOboxes as PB
@@ -20,9 +20,9 @@ include("sedcrust/SedCrust.jl")
 include("biogeochem/BioGeoChem.jl")
 
 
-# TODO gains here with Julia 1.8.1 are marginal (~20s)
-if false # VERSION >= v"1.8.0" # negligible benefit from precompile prior to Julia 1.8.0
-    @SnoopPrecompile.precompile_setup begin
+# TODO gains here with Julia 1.9.0-rc3, PrecompileTools v1.0.3 are marginal (95sec -> 82sec for include("COPSE_reloaded_reloaded.jl"))
+if VERSION >= v"1.8.0" # negligible benefit from precompile prior to Julia 1.8.0
+    @PrecompileTools.setup_workload begin
         # create Reactions and register methods to precompile this code
 
         # Putting some things in `setup` can reduce the size of the
@@ -38,7 +38,7 @@ if false # VERSION >= v"1.8.0" # negligible benefit from precompile prior to Jul
             "ReactionGlobalTemperatureCK1992", "ReactionLandBiota", "ReactionForce_Bbergman2004",
         ]
 
-        @SnoopPrecompile.precompile_all_calls begin
+        @PrecompileTools.compile_workload begin
             # all calls in this block will be precompiled, regardless of whether
             # they belong to your package or not (on Julia 1.8 and higher)
 
