@@ -494,6 +494,11 @@ Base.@kwdef mutable struct ReactionLandWeatheringFluxes{P} <: PB.AbstractReactio
         PB.ParDouble("CPland0",        1000.0,     units="",
             description="present-day C/P land burial"),
 
+        # Treatment of DIC in riverine fluxes
+        PB.ParBool("dic_runoff", true, 
+            description="true to add additional DIC runoff terms to riverine (and atmosphere) fluxes so riverine DIC ~ TAlk, "*
+            "false to just use riverine DIC = 'carbw'"),
+
         # Isotopes
         PB.ParType(PB.AbstractData, "CIsotope", PB.ScalarData,
             external=true,
@@ -810,20 +815,26 @@ function do_land_weathering_fluxes(
 
     carbw_isotope       = @PB.isotope_totaldelta(CIsotopeType, D.carbw[], D.C_delta[])
 
-    # DIC isotopes - need to take account of atmosphere-water fractionation
-    # (not critical to get this right, as there is a 'short circuit' atm <-> river -> ocean <-> atm)
-    DICrunoff           = @PB.isotope_totaldelta(CIsotopeType, D.carbw[] + 2*D.silw[], D.CO2_delta[] + D.D_eqbw_CO2[])
+    
 
     # fluxes
     #########################################################################
 
     # Atmospheric fluxes 
-    fluxAtoLand.CO2[]   += DICrunoff - oxidw_isotope + locb_isotope
+    fluxAtoLand.CO2[]   += - oxidw_isotope + locb_isotope
     
     fluxAtoLand.O2[]    += D.oxidw[] + 2*D.pyrw[] - D.locb[]
 
     # Riverine fluxes
-    fluxRtoOcean.DIC[]  += DICrunoff + carbw_isotope   
+    fluxRtoOcean.DIC[]  += carbw_isotope
+
+    if pars.dic_runoff[]
+        # DIC isotopes - need to take account of atmosphere-water fractionation
+        # (not critical to get this right, as there is a 'short circuit' atm <-> river -> ocean <-> atm)
+        DICrunoff           = @PB.isotope_totaldelta(CIsotopeType, D.carbw[] + 2*D.silw[], D.CO2_delta[] + D.D_eqbw_CO2[])
+        fluxAtoLand.CO2[]   += DICrunoff 
+        fluxRtoOcean.DIC[]  += DICrunoff
+    end
 
     fluxRtoOcean.TAlk[] += 2*D.silw[] + 2*D.carbw[]
     if pars.SRedoxAlk[]
