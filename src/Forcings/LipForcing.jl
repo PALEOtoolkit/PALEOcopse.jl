@@ -82,19 +82,19 @@ end
 #####################################################
 
 """
-    read_lips_xlsx(lipfile)  -> LIPdata::NamedTuple
+    read_lips_xlsx(io, lipfile)  -> LIPdata::NamedTuple
 
 read LIP data from spreadsheet
 """
-function read_lips_xlsx(lipfile)
+function read_lips_xlsx(io, lipfile)
 
-    @info "    read_lips_xlsx: spreadsheet $(lipfile)"
+    println(io, "    read_lips_xlsx: spreadsheet $(lipfile)")
 
     xf = XLSX.readxlsx(lipfile)
     sh = xf["Sheet1"]
 
     column_names = sh["A1:I1"]
-    @info "    read_lips_xlsx: column_names: $(column_names)"
+    println(io, "    read_lips_xlsx: column_names: $(column_names)")
     expected_column_names = ["Age" "Name" "Type" "Continental areas" "All volumes" "CO2 release (min)" "CO2 release (max)" "Degassing duration" "Present day area"]
     column_names == expected_column_names || error("spreadsheet column names don't match expected_column_names=", expected_column_names)
 
@@ -296,24 +296,28 @@ function setup_force_LIPs(m::PB.ReactionMethod, pars, (), cellrange::PB.Abstract
 
     attribute_name == :setup || return nothing
 
-    lipfile = joinpath(pars.datafolder[], pars.datafile[])
-    @info "setup_force_LIPs! ReactionForce_LIPs: $(PB.fullname(rj)) loading LIP forcing from 'datafolder/datafile'='$(lipfile)'"
+    io = IOBuffer()
 
-    rj.LIP_data = read_lips_xlsx(lipfile)
+    lipfile = joinpath(pars.datafolder[], pars.datafile[])
+    println(io, "setup_force_LIPs! ReactionForce_LIPs: $(PB.fullname(rj)) loading LIP forcing from 'datafolder/datafile'='$(lipfile)'")
+
+    rj.LIP_data = read_lips_xlsx(io, lipfile)
 
     lipkwargs = (smoothempl=pars.smoothempl[], )
 
     rj.default_lambda = find_default_lambda(pars.present_day_CFB_area[], rj.LIP_data, lipkwargs )
 
-    @info "    found default_lambda=$(rj.default_lambda) "*
-        "to match present_day_CFB_area = $(pars.present_day_CFB_area[]) km^2"
+    println(io, "    found default_lambda=$(rj.default_lambda) "*
+        "to match present_day_CFB_area = $(pars.present_day_CFB_area[]) km^2")
  
     co2releasefield = Symbol(pars.co2releasefield[])
-    @info "    add LIP CO2 release from $(pars.co2releasefield[]) field"
+    println(io, "    add LIP CO2 release from $(pars.co2releasefield[]) field")
 
     empty!(rj.LIPs)
     rj.LIPs = create_LIPs(rj.LIP_data, co2releasefield, rj.default_lambda; lipkwargs...)
-        
+
+    @info String(take!(io))
+
     return nothing
 end
 
