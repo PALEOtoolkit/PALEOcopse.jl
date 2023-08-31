@@ -321,15 +321,17 @@ function setup_force_spreadsheet(m::PB.ReactionMethod, pars, (), cellrange::PB.A
     attribute_name == :setup || return nothing
 
     forcingfile = joinpath(pars.datafolder[], pars.datafile[])
-    @info "setup_force_spreadsheet ReactionForce_spreadsheet $(PB.fullname(rj)): "*
-        "loading $(pars.forcename[]) forcing from 'datafolder/datafile'='$(forcingfile)'"
-    rj.forcing_data = _read_xlsx(forcingfile, sheetname=pars.sheetname[])
+
+    io = IOBuffer()
+    println(io, "setup_force_spreadsheet ReactionForce_spreadsheet $(PB.fullname(rj)): ")
+    println(io, "    loading $(pars.forcename[]) forcing from 'datafolder/datafile'='$(forcingfile)'")
+    rj.forcing_data = _read_xlsx(io, forcingfile, sheetname=pars.sheetname[])
 
     sp_times = pars.timemultiplier[]*rj.forcing_data[:, pars.timecolumn[]]
-    @info "    'tforce' from $(pars.timemultiplier[]) * column $(pars.timecolumn[]) ($(names(rj.forcing_data)[pars.timecolumn[]]))"
+    println(io, "    'tforce' from $(pars.timemultiplier[]) * column $(pars.timecolumn[]) ($(names(rj.forcing_data)[pars.timecolumn[]]))")
 
     sp_values = Float64.(rj.forcing_data[:, pars.datacolumn[]])
-    @info "    '$(pars.forcename[])' from column $(pars.datacolumn[]) ($(names(rj.forcing_data)[pars.datacolumn[]]))"
+    println(io, "    '$(pars.forcename[])' from column $(pars.datacolumn[]) ($(names(rj.forcing_data)[pars.datacolumn[]]))")
 
     # sort in ascending time order
     sp_perm = sortperm(sp_times)
@@ -337,15 +339,17 @@ function setup_force_spreadsheet(m::PB.ReactionMethod, pars, (), cellrange::PB.A
     rj.force_values = sp_values[sp_perm]
 
     extrap_past = isnan(pars.extrap_value_past[]) ? "earlist value in spreadsheet = $(first(rj.force_values))" : "'extrap_value_past' = $(pars.extrap_value_past[])"
-    @info "    extrapolating out-of-range tforce < $(first(rj.force_times)) (yr) to $extrap_past"
+    println(io, "    extrapolating out-of-range tforce < $(first(rj.force_times)) (yr) to $extrap_past")
     extrap_future = isnan(pars.extrap_value_future[]) ? "latest value in spreadsheet = $(last(rj.force_values))" : "'extrap_value_future' = $(pars.extrap_value_future[])"
-    @info "    extrapolating out-of-range tforce > $(last(rj.force_times)) (yr) to $extrap_future"
+    println(io, "    extrapolating out-of-range tforce > $(last(rj.force_times)) (yr) to $extrap_future")
    
     # create interpolation object
     rj.interp_FORCE = Interpolations.LinearInterpolation(
         rj.force_times, rj.force_values, 
         extrapolation_bc = Interpolations.Flat() # only used for extrap_value_past, future == NaN
     )
+
+    @info String(take!(io))
 
     return nothing
 end
@@ -367,16 +371,16 @@ function do_force_spreadsheet(m::PB.ReactionMethod, pars, (var_tforce, var_FORCE
     return nothing
 end
 
-function _read_xlsx(forcingfile; sheetname="Sheet1")
+function _read_xlsx(io, forcingfile; sheetname="Sheet1")
 
-    @info "    read_xlsx: spreadsheet $(forcingfile) sheet $(sheetname)"
+    println(io, "    read_xlsx: spreadsheet $(forcingfile) sheet $(sheetname)")
 
     xf = XLSX.readxlsx(forcingfile)
 
     # Read using built-in iterator - assumes single header row, automatic type conversion
     df = XLSX.eachtablerow(xf[sheetname]) |> DataFrames.DataFrame
 
-    @info "    read_xlsx read $(DataFrames.describe(df))"
+    println(io, "    read_xlsx read $(DataFrames.describe(df))")
 
     return df
 end
