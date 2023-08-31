@@ -20,7 +20,7 @@ include("sedcrust/SedCrust.jl")
 include("biogeochem/BioGeoChem.jl")
 
 
-# TODO gains here with Julia 1.9.0-rc3, PrecompileTools v1.0.3 are marginal (95sec -> 82sec for include("COPSE_reloaded_reloaded.jl"))
+# gains from precompilation with Julia 1.10.0-beta2, PrecompileTools v1.2.0 are 48sec -> 27sec for include("COPSE_reloaded_reloaded.jl"))
 if VERSION >= v"1.8.0" # negligible benefit from precompile prior to Julia 1.8.0
     @PrecompileTools.setup_workload begin
         # create Reactions and register methods to precompile this code
@@ -28,30 +28,21 @@ if VERSION >= v"1.8.0" # negligible benefit from precompile prior to Julia 1.8.0
         # Putting some things in `setup` can reduce the size of the
         # precompile file and potentially make loading faster.
         
-
-        rdict = PB.find_all_reactions()
-        reactionlist = ["ReactionSrSed", "ReactionLandWeatheringFluxes", "ReactionSrLand", "ReactionLandArea", "ReactionForce_LIPs",
-            "ReactionForce_CK_Solar", "ReactionLandWeatheringRates", "ReactionModelBergman2004", 
-            "ReactionCIsotopes", "ReactionMarineBiotaCOPSE", "ReactionOceanBurialCOPSE", "ReactionAtmOcean_A", "ReactionSedCrustCOPSE", "ReactionGlobalTemperatureBerner",
-            "ReactionSrOceanfloor", "ReactionForce_CPlandrelbergman2004", "ReactionForce_UDWEbergman2004", "ReactionSeafloorWeathering",
-            "ReactionSrMantleCrust", "ReactionLandBergman2004", "ReactionAtmOcean_O", "ReactionForce_spreadsheet", 
-            "ReactionGlobalTemperatureCK1992", "ReactionLandBiota", "ReactionForce_Bbergman2004",
+        configlist = [
+            (joinpath(@__DIR__, "../examples/COPSE/COPSE_bergman2004_bergman2004_cfg.yaml"), "Bergman2004"),
+            (joinpath(@__DIR__, "../examples/COPSE/COPSE_reloaded_bergman2004_cfg.yaml"), "model1"),
+            (joinpath(@__DIR__, "../examples/COPSE/COPSE_reloaded_reloaded_cfg.yaml"), "model1"),
         ]
-
         @PrecompileTools.compile_workload begin
             # all calls in this block will be precompiled, regardless of whether
             # they belong to your package or not (on Julia 1.8 and higher)
-
-            Logging.with_logger(Logging.NullLogger()) do
-                for r in reactionlist
-                    PB.precompile_reaction(rdict, r)
-                end
-
-                # 
-                PB.run_model(joinpath(@__DIR__, "../examples/COPSE/COPSE_bergman2004_bergman2004_cfg.yaml"), "Bergman2004")
-                PB.run_model(joinpath(@__DIR__, "../examples/COPSE/COPSE_reloaded_bergman2004_cfg.yaml"), "model1")
-                PB.run_model(joinpath(@__DIR__, "../examples/COPSE/COPSE_reloaded_reloaded_cfg.yaml"), "model1")
+            logger=Logging.NullLogger()
+            # logger=Logging.ConsoleLogger()
+           
+            for (config_file, config_model) in configlist
+                PB.run_model(config_file, config_model; call_do_deriv=true, logger)
             end
+
         end
     end
 end
