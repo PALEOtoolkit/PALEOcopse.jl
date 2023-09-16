@@ -6,8 +6,8 @@ using DocumenterCitations
 
 bib = CitationBibliography(joinpath(@__DIR__, "src/paleo_references.bib"))
 
-makedocs(bib, sitename="PALEOcopse Documentation", 
-# makedocs(sitename="PALEO Documentation", 
+makedocs(;
+    sitename = "PALEOcopse Documentation", 
     pages = [
         "index.md",
         "Examples and Tutorials" => [
@@ -16,7 +16,7 @@ makedocs(bib, sitename="PALEOcopse Documentation",
         "Design" => [
             "COPSE_Domains.md",
         ],
-        # no HOWTO docs yes
+        # no HOWTO docs yet
         "Reference" => [
             "PALEOcopse.md",
         ],
@@ -26,6 +26,7 @@ makedocs(bib, sitename="PALEOcopse Documentation",
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true"
     ),
+    plugins = [bib],
 )
 
 @info "Local html documentation is available at $(joinpath(@__DIR__, "build/index.html"))"
