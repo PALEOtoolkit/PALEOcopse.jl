@@ -4,7 +4,10 @@ import PALEOcopse
 
 using DocumenterCitations
 
-bib = CitationBibliography(joinpath(@__DIR__, "src/paleo_references.bib"))
+bib = CitationBibliography(
+    joinpath(@__DIR__, "src/paleo_references.bib");
+    style=:authoryear,
+)
 
 makedocs(;
     sitename = "PALEOcopse Documentation", 
