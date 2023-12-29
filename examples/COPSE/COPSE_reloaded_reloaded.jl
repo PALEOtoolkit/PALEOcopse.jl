@@ -1,7 +1,7 @@
 using Logging
 import DataFrames
 
-using Plots 
+using Plots
 
 import PALEOboxes as PB
 import PALEOmodel
@@ -19,7 +19,7 @@ global_logger(ConsoleLogger(stderr,Logging.Info))
 
 @info "Start $(@__FILE__)"
 
-# load archived model output 
+# load archived model output
 # comparemodel=nothing
 
 # Baseline Phanerozoic configuration
@@ -43,13 +43,13 @@ tspan=(-1000e6, 0)
 # OOE oscillations with VCI and linear mocb
 # comparemodel = nothing
 # model = copse_reloaded_reloaded_expts(
-#     "reloaded", 
+#     "reloaded",
 #     [
 #         "VCI",
 #         "mocbProdLinear",
 #         ("set_par", "global", "force_LIPs", "co2releasefield", "CO2max"),
 #     ],
-# ) 
+# )
 # tspan=(-1000e6, 1e6)
 
 ######################################
@@ -69,18 +69,19 @@ println("integrate, no jacobian")
 run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
 
 @time PALEOmodel.ODE.integrate(
-    run, initial_state, modeldata, tspan, 
+    run, initial_state, modeldata, tspan,
     solvekwargs=( # https://diffeq.sciml.ai/stable/basics/common_solver_opts/
+    dtmin=0.0,
         reltol=1e-4,
         # reltol=1e-5,
         # saveat=1e6,
         # dtmax=1e4,
     )
-) 
+)
 
 # println("integrate, jacobian from autodifferentiation")
 # @time PALEOmodel.ODE.integrateForwardDiff(run, initial_state, modeldata, (-1000e6, 0), jac_ad_t_sparsity=0.0, solvekwargs=(reltol=1e-5,))
-                                   
+
 # PB.TestUtils.bench_model(run.model)
 
 ##############################
@@ -99,10 +100,10 @@ pager=PALEOmodel.PlotPager(9, (legend_background_color=nothing, ))
 copse_reloaded_reloaded_plot(run.output, pager=pager)
 
 #####################################
-# Check diff against comparison model 
+# Check diff against comparison model
 ########################################
 
-if !isnothing(comparemodel)   
+if !isnothing(comparemodel)
     diff = CompareOutput.compare_copse_output(run.output, comparemodel)
     firstpoint=50
     show(sort(DataFrames.describe(diff[firstpoint:end, :], :std, :min, :max, :mean), :std), allrows=true)
@@ -110,7 +111,7 @@ if !isnothing(comparemodel)
     println()
 
     # Overlay plots for comparison
-    CompareOutput.copse_reloaded_comparecopse(run.output, comparemodel, include_Sr=true, pager=pager) 
+    CompareOutput.copse_reloaded_comparecopse(run.output, comparemodel, include_Sr=true, pager=pager)
 end
 
 ####################################################################################################

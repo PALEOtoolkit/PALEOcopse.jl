@@ -17,7 +17,7 @@ include("compare_output.jl")
 include("copse_bergman2004_bergman2004_expts.jl")
 
 
-# load archived model output 
+# load archived model output
 comparemodel = CompareOutput.copse_output_load("bergman2004","")
 # comparemodel = nothing
 
@@ -42,24 +42,26 @@ if use_TEMP_DAE
     println("integrate, DAE")
     # first run includes JIT time
     @time PALEOmodel.ODE.integrateDAE(
-        run, initial_state, modeldata, (-600e6, 0), 
+        run, initial_state, modeldata, (-600e6, 0),
         solvekwargs=(
+            dtmin=0.0,
             saveat=1e6, # save output every 1e6 yr see https://diffeq.sciml.ai/dev/basics/common_solver_opts/
         )
     )
-    
-    # sparse jacobian with IDA(linear_solver=:KLU) fails at ~-350e6 yr ?       
+
+    # sparse jacobian with IDA(linear_solver=:KLU) fails at ~-350e6 yr ?
     # @time PALEOmodel.ODE.integrateDAEForwardDiff(run, initial_state, modeldata, (-650e6, 0), alg=IDA(linear_solver=:KLU))
 else
     println("integrate, ODE")
-    # first run includes JIT time    
+    # first run includes JIT time
     @time PALEOmodel.ODE.integrate(
-        run, initial_state, modeldata, (-600e6, 0), 
+        run, initial_state, modeldata, (-600e6, 0),
         solvekwargs=(
+            dtmin=0.0,
             saveat=1e6, # save output every 1e6 yr see https://diffeq.sciml.ai/dev/basics/common_solver_opts/
         )
-    )  
-    # sparse jacobian with IDA(linear_solver=:KLU) fails at ~-350e6 yr ?       
+    )
+    # sparse jacobian with IDA(linear_solver=:KLU) fails at ~-350e6 yr ?
     # @time PALEOmodel.ODE.integrateForwardDiff(run, initial_state, modeldata, (-650e6, 0), alg=CVODE_BDF(linear_solver=:KLU))
 end
 
