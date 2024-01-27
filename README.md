@@ -27,7 +27,7 @@ The implementation is mathematically equivalent to the [Matlab version](https://
 
 ### Installation
 
-NB: requires Julia 1.6 or later.  To check the Julia version:
+NB: requires Julia 1.9 or later.  To check the Julia version:
 
     julia> versioninfo()
 
