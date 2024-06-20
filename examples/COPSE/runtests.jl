@@ -27,18 +27,22 @@ skipped_testsets = [
     # load archived model output 
     comparemodel = CompareOutput.copse_output_load("reloaded", "reloaded_baseline")
 
-    model = copse_reloaded_reloaded_expts("reloaded", ["baseline"])
+    model = PB.create_model_from_config(
+        joinpath(@__DIR__, "COPSE_reloaded_reloaded_cfg.yaml"), 
+        "model1";
+    )
+    copse_reloaded_reloaded_expts(model, ["baseline"])
     initial_state, modeldata = PALEOmodel.initialize!(model; check_units_opt=:error)
 
-    run = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
+    paleorun = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
 
     @time PALEOmodel.ODE.integrate(
-        run, initial_state, modeldata, (-1000e6, 0), 
+        paleorun, initial_state, modeldata, (-1000e6, 0), 
         solvekwargs=(
             reltol=1e-4,
         )
     ) 
-    # @time PALEOmodel.ODE.integrateForwardDiff(run, initial_state, modeldata, (-1000e6, 0), jac_ad_t_sparsity=0.0, solvekwargs=(reltol=1e-4,))
+    # @time PALEOmodel.ODE.integrateForwardDiff(paleorun, initial_state, modeldata, (-1000e6, 0), jac_ad_t_sparsity=0.0, solvekwargs=(reltol=1e-4,))
 
     # conservation checks
     conschecks = [  
@@ -50,7 +54,7 @@ skipped_testsets = [
     ]    
     for (varname, propertyname, rtol) in conschecks
         startval, endval = PB.get_property(
-            PB.get_data(run.output, "global."*varname), 
+            PB.get_data(paleorun.output, "global."*varname), 
             propertyname=propertyname,
         )[[1, end]]
         println("check $varname $startval $endval $rtol")
@@ -58,7 +62,7 @@ skipped_testsets = [
     end
 
     # comparison to archived output
-    diff = CompareOutput.compare_copse_output(run.output, comparemodel)
+    diff = CompareOutput.compare_copse_output(paleorun.output, comparemodel)
     firstpoint=50
     diffsummary = DataFrames.describe(diff[firstpoint:end, :], :std, :min, :max, :mean)
 
@@ -86,14 +90,17 @@ end
 
     comparemodel = CompareOutput.copse_output_load("reloaded","original_baseline")
 
-    model = copse_reloaded_bergman2004_expts("bergman2004", ["baseline"])
+    model = PB.create_model_from_config(
+        joinpath(@__DIR__, "COPSE_reloaded_bergman2004_cfg.yaml"), "model1"
+    )
+    copse_reloaded_bergman2004_expts(model, ["baseline"])
 
     initial_state, modeldata = PALEOmodel.initialize!(model; check_units_opt=:error)
 
-    run = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
+    paleorun = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
 
     @time PALEOmodel.ODE.integrate(
-        run, initial_state, modeldata, (-1000e6, 0), 
+        paleorun, initial_state, modeldata, (-1000e6, 0), 
         solvekwargs=(
             reltol=1e-4,
             # saveat=1e6,
@@ -110,7 +117,7 @@ end
     ]    
     for (varname, propertyname, rtol) in conschecks
         startval, endval = PB.get_property(
-            PB.get_data(run.output, "global."*varname),
+            PB.get_data(paleorun.output, "global."*varname),
             propertyname=propertyname
         )[[1, end]]
         println("check $varname $startval $endval $rtol")
@@ -118,7 +125,7 @@ end
     end
 
     # comparison to archived output
-    diff = CompareOutput.compare_copse_output(run.output, comparemodel)
+    diff = CompareOutput.compare_copse_output(paleorun.output, comparemodel)
     firstpoint = 100
     diffsummary = DataFrames.describe(diff[firstpoint:end, :], :std, :min, :max, :mean)
 
@@ -145,14 +152,19 @@ end
 
     comparemodel = CompareOutput.copse_output_load("bergman2004","")
 
-    model = copse_bergman2004_bergman2004_expts(["baseline"])
+    model = PB.create_model_from_config(
+        joinpath(@__DIR__, "COPSE_bergman2004_bergman2004_cfg.yaml"), 
+        "Bergman2004"; 
+    )
+
+    copse_bergman2004_bergman2004_expts(model, ["baseline"])
 
     initial_state, modeldata = PALEOmodel.initialize!(model; check_units_opt=:error)
 
-    run = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
+    paleorun = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
     
     @time PALEOmodel.ODE.integrate(
-        run, initial_state, modeldata, (-600e6, 0),
+        paleorun, initial_state, modeldata, (-600e6, 0),
         solvekwargs=(
             saveat=1e6,
         )
@@ -168,7 +180,7 @@ end
     ]    
     for (varname, propertyname, rtol) in conschecks
         startval, endval = PB.get_property(
-            PB.get_data(run.output, "global."*varname),
+            PB.get_data(paleorun.output, "global."*varname),
             propertyname=propertyname
         )[[1, end]]
         println("check $varname $startval $endval $rtol")
@@ -176,7 +188,7 @@ end
     end
 
     # comparison to archived output
-    diff = CompareOutput.compare_copse_output(run.output, comparemodel)
+    diff = CompareOutput.compare_copse_output(paleorun.output, comparemodel)
     firstpoint = 1
     diffsummary = DataFrames.describe(diff[firstpoint:end, :], :std, :min, :max, :mean)
 

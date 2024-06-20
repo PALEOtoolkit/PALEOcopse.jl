@@ -1,32 +1,8 @@
 
 
 function copse_reloaded_bergman2004_expts(
-    basemodel, expts;
-    modelpars=Dict{}(),
+    model, expts
 )
-
-
-    ####################
-    # set basemodel
-    ####################
-    if basemodel == "bergman2004"
-        # modelpars = Dict("CIsotope"=>"ScalarData", "SIsotope"=>"ScalarData", "CIsotopeReacts"=>false)
-        model = PB.create_model_from_config(
-            joinpath(@__DIR__, "COPSE_reloaded_bergman2004_cfg.yaml"), "model1", 
-            modelpars=modelpars,
-        )
-
-    elseif basemodel == "bergman2004noS"
-        modelpars=merge(modelpars, Dict("enableS"=>false, "disableS"=>true))
-        model = PB.create_model_from_config(
-            joinpath(@__DIR__, "COPSE_reloaded_bergman2004_cfg.yaml"), "model1", 
-            modelpars=modelpars
-        )
-        
-    else
-        error("unknown basemodel ", basemodel)
-    end
-
 
     ###############################################
     # choose an 'expt' (a delta to the base model)

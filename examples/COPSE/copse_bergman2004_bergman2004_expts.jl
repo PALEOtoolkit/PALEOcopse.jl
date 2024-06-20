@@ -1,15 +1,10 @@
 
 
 function copse_bergman2004_bergman2004_expts(
-    expts;   
-    modelpars=Dict{}(),
+    model, expts
 )
 
-    model = PB.create_model_from_config(
-        joinpath(@__DIR__, "COPSE_bergman2004_bergman2004_cfg.yaml"), 
-        "Bergman2004"; 
-        modelpars=modelpars,
-    )
+    
         
     ###############################################
     # choose an 'expt' (a delta to the base model)

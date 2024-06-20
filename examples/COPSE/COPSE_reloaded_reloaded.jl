@@ -25,25 +25,37 @@ global_logger(ConsoleLogger(stderr,Logging.Info))
 # Baseline Phanerozoic configuration
 # comparemodel = CompareOutput.copse_output_load("reloaded","reloaded_baseline")
 comparemodel = nothing
-model = copse_reloaded_reloaded_expts(
-    "reloaded",
+model = PB.create_model_from_config(
+    joinpath(@__DIR__, "COPSE_reloaded_reloaded_cfg.yaml"), 
+    "model1";
+)
+copse_reloaded_reloaded_expts(
+    model,
     ["baseline"],
 )
 tspan=(-1000e6, 0)
 
 # Fix oxygen
 # comparemodel = nothing
-# model = copse_reloaded_reloaded_expts(
-#     "reloaded",
-#     ["baseline", ("set_initial_value", "atmocean", "O", 3.7e19)],
+# model = PB.create_model_from_config(
+#     joinpath(@__DIR__, "COPSE_reloaded_reloaded_cfg.yaml"), 
+#     "model1";
 #     modelpars=Dict("const_O"=>true),
+# )
+# copse_reloaded_reloaded_expts(
+#     model,
+#     ["baseline", ("set_initial_value", "atmocean", "O", 3.7e19)],
 # )
 # tspan=(-1000e6, 0)
 
 # OOE oscillations with VCI and linear mocb
 # comparemodel = nothing
-# model = copse_reloaded_reloaded_expts(
-#     "reloaded", 
+# model = PB.create_model_from_config(
+#     joinpath(@__DIR__, "COPSE_reloaded_reloaded_cfg.yaml"), 
+#     "model1";
+# )
+# copse_reloaded_reloaded_expts(
+#     model, 
 #     [
 #         "VCI",
 #         "mocbProdLinear",
@@ -66,10 +78,10 @@ println("initial_deriv", initial_deriv)
 
 println("integrate, no jacobian")
 
-run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
+paleorun = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
 
 @time PALEOmodel.ODE.integrate(
-    run, initial_state, modeldata, tspan, 
+    paleorun, initial_state, modeldata, tspan, 
     solvekwargs=( # https://diffeq.sciml.ai/stable/basics/common_solver_opts/
         reltol=1e-4,
         # reltol=1e-5,
@@ -79,9 +91,9 @@ run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory
 ) 
 
 # println("integrate, jacobian from autodifferentiation")
-# @time PALEOmodel.ODE.integrateForwardDiff(run, initial_state, modeldata, (-1000e6, 0), jac_ad_t_sparsity=0.0, solvekwargs=(reltol=1e-5,))
+# @time PALEOmodel.ODE.integrateForwardDiff(paleorun, initial_state, modeldata, (-1000e6, 0), jac_ad_t_sparsity=0.0, solvekwargs=(reltol=1e-5,))
                                    
-# PB.TestUtils.bench_model(run.model)
+# PB.TestUtils.bench_model(paleorun.model)
 
 ##############################
 # Plot output
@@ -96,21 +108,21 @@ gr(size=(1600, 900)) # GR backend with large screen size
 pager=PALEOmodel.PlotPager(9, (legend_background_color=nothing, ))
 
 
-copse_reloaded_reloaded_plot(run.output, pager=pager)
+copse_reloaded_reloaded_plot(paleorun.output, pager=pager)
 
 #####################################
 # Check diff against comparison model 
 ########################################
 
 if !isnothing(comparemodel)   
-    diff = CompareOutput.compare_copse_output(run.output, comparemodel)
+    diff = CompareOutput.compare_copse_output(paleorun.output, comparemodel)
     firstpoint=50
     show(sort(DataFrames.describe(diff[firstpoint:end, :], :std, :min, :max, :mean), :std), allrows=true)
 
     println()
 
     # Overlay plots for comparison
-    CompareOutput.copse_reloaded_comparecopse(run.output, comparemodel, include_Sr=true, pager=pager) 
+    CompareOutput.copse_reloaded_comparecopse(paleorun.output, comparemodel, include_Sr=true, pager=pager) 
 end
 
 ####################################################################################################
@@ -119,9 +131,9 @@ end
 
 if false
     include("compare_output_plots.jl")
-    copse_reloaded_comparedata([run.output], include_Sr=true, pager=pager)
+    copse_reloaded_comparedata([paleorun.output], include_Sr=true, pager=pager)
 else
-    copse_reloaded_reloaded_plot_summary([run.output], pager=pager)
+    copse_reloaded_reloaded_plot_summary([paleorun.output], pager=pager)
 end
 
 pager(:newpage) # flush output
