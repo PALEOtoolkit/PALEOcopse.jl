@@ -72,13 +72,13 @@ function PB.register_methods!(rj::ReactionSedCrustCOPSE)
         
     # state variables we use
     state_varnames = [
-        ("C::$CIsotopeType",          "mol C",    "Sedimentary carbonate"),
-        ("G::$CIsotopeType",          "mol C",    "Sedimentary organic carbon"),
+        ("C::$CIsotopeType",          "mol",    "Sedimentary carbonate (mol C)"),
+        ("G::$CIsotopeType",          "mol",    "Sedimentary organic carbon (mol C)"),
     ]
     if rj.pars.enableS[]
         push!(state_varnames,
-            ("GYP::$SIsotopeType",        "mol S",    "Sedimentary gypsum"),
-            ("PYR::$SIsotopeType",        "mol S",    "Sedimentary pyrite"),
+            ("GYP::$SIsotopeType",        "mol",    "Sedimentary gypsum (mol S)"),
+            ("PYR::$SIsotopeType",        "mol",    "Sedimentary pyrite (mol S)"),
         )
     end
     vars_res, vars_sms, vars_dep_res = PB.Reservoirs.ReservoirLinksVector(

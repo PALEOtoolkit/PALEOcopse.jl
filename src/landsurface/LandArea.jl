@@ -65,7 +65,7 @@ function PB.register_methods!(rj::ReactionLandArea)
     elseif rj.pars.f_basaltarea[] == "g3_2014_construct_from_lips"
         push!(vars,
             PB.VarDepScalar("global.CFB_area", "km^2",  "Continental flood basalt area"),
-            PB.VarDepScalar("global.DEGASS",   "km^2",  "Normalized degass forcing"),
+            PB.VarDepScalar("global.DEGASS",   "",  "Normalized degass forcing"),
             PB.VarPropScalar("oib_area",  "km^2",  "Ocean island basalt area"),
         )
     else

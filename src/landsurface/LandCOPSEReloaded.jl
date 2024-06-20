@@ -547,13 +547,13 @@ function PB.register_methods!(rj::ReactionLandWeatheringFluxes)
             ("oxw_facOmax",        "",      "maximum possible oxidative weathering factor at high pO2"),
             # sedcrust
             ("sedcrust.C_norm",        "",    "Sedimentary carbonate normalized to present day"),
-            ("(sedcrust.C_delta)",        "",    "Sedimentary carbonate d13C"),
+            ("(sedcrust.C_delta)",        "per mil",    "Sedimentary carbonate d13C"),
             ("sedcrust.G_norm",        "",    "Sedimentary organic carbon normalized to present day"),
-            ("(sedcrust.G_delta)",        "",    "Sedimentary organic carbon d13C"),
+            ("(sedcrust.G_delta)",        "per mil",    "Sedimentary organic carbon d13C"),
             ("(sedcrust.GYP_norm)",      "",    "Sedimentary gypsum normalized to present day"),
-            ("(sedcrust.GYP_delta)",      "",    "Sedimentary gypsum d34S"),
+            ("(sedcrust.GYP_delta)",      "per mil",    "Sedimentary gypsum d34S"),
             ("(sedcrust.PYR_norm)",      "",    "Sedimentary pyrite normalized to present day"),
-            ("(sedcrust.PYR_delta)",      "",    "Sedimentary pyrite d34S")
+            ("(sedcrust.PYR_delta)",      "per mil",    "Sedimentary pyrite d34S")
         ]
     )
 

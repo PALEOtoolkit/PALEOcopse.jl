@@ -58,10 +58,10 @@ end
 function PB.register_methods!(rj::ReactionMarineBiotaCOPSE)
 
     state_varnames = [
-        ("P",                   "mol P",    "Marine phosphorus"),         
+        ("P",                   "mol",    "Marine phosphorus"),         
     ]   
     if rj.pars.f_ncycle[]
-        push!(state_varnames, ("N",               "mol N",    "Marine nitrogen"))
+        push!(state_varnames, ("N",               "mol",    "Marine nitrogen"))
     end
     vars_res, vars_sms, vars_dep_res = PB.Reservoirs.ReservoirLinksVector(
         Dict(), state_varnames
@@ -282,13 +282,13 @@ function PB.register_methods!(rj::ReactionOceanBurialCOPSE)
     end
 
     state_varnames = [          
-        ("O",                   "mol O2",   "Atm-ocean oxygen"),
-        ("P",                   "mol P",    "Marine phosphorus"),
-        ("(DIC::$CIsotopeType)",    "mol C",    "ocean inorganic carbon"),    
-        ("(CAL)",               "mol Ca",   "Marine calcium"),
+        ("O",                   "mol",   "Atm-ocean oxygen (mol O2)"),
+        ("P",                   "mol",    "Marine phosphorus"),
+        ("(DIC::$CIsotopeType)",    "mol",    "ocean inorganic carbon"),    
+        ("(CAL)",               "mol",   "Marine calcium"),
     ]
     if rj.pars.enableS[]
-        push!(state_varnames, ("S::$SIsotopeType",      "mol S",    "Marine sulphate"))
+        push!(state_varnames, ("S::$SIsotopeType",      "mol",    "Marine sulphate"))
     end
     vars_res, vars_sms, vars_dep_res = PB.Reservoirs.ReservoirLinksVector(
         Dict(), state_varnames
@@ -296,10 +296,10 @@ function PB.register_methods!(rj::ReactionOceanBurialCOPSE)
 
     # additional fluxes where we don't require the values of the state variable 
     if rj.pars.f_ncycle[]
-        push!(vars_sms, PB.VarContribScalar("N_sms", "mol N yr-1", "Marine nitrogen source - sink"))
+        push!(vars_sms, PB.VarContribScalar("N_sms", "mol yr-1", "Marine nitrogen source - sink"))
     end
     if rj.pars.enableS[] && rj.pars.SRedoxAlk[]
-        push!(vars_sms, PB.VarContribScalar("TAlk_sms", "mol TAlk yr-1", "Marine total alkalinity source - sink"))
+        push!(vars_sms, PB.VarContribScalar("TAlk_sms", "mol yr-1", "Marine total alkalinity source - sink"))
     end
 
     # dependencies required in do_react

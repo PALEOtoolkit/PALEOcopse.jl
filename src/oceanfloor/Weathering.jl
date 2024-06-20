@@ -65,7 +65,7 @@ function PB.register_methods!(rj::ReactionSeafloorWeathering)
         PB.VarDepScalar("global.RHOSFW",          "", "seafloor weathering-specific additional forcing (usually 1.0)"),
         PB.VarDepScalar("(global.TEMP)",          "K", "global mean temperature"),
         PB.VarDepScalar("(global.DEGASS)",      "", "degass forcing"),
-        PB.VarDepScalar("(atm.pCO2PAL)",          "PAL", "atmospheric pCO2PAL"),
+        PB.VarDepScalar("(atm.pCO2PAL)",          "", "atmospheric pCO2PAL"),
         PB.VarDep("(ocean.oceanfloor.DIC_delta)",          "per mil", "d13C DIC"),
         PB.VarDepScalar("(ocean.D_mccb_DIC)",   "per mil",  "d13C marine calcite burial relative to ocean DIC"),
 

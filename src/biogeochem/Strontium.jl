@@ -58,9 +58,9 @@ function PB.register_methods!(rj::ReactionSrMantleCrust)
 
     vars = [
         PB.VarDepScalar("global.tforce", "yr",  "historical time at which to apply forcings, present = 0 yr"),
-        PB.VarPropScalar("Sr_old_ig_delta",  "", "d87Sr old igneous rocks (granite)"),
-        PB.VarPropScalar("Sr_new_ig_delta",  "", "d87Sr new igneous rocks (basalt)"),
-        PB.VarPropScalar("Sr_mantle_delta",  "", "d87Sr mantle"),
+        PB.VarPropScalar("Sr_old_ig_delta",  "unknown", "d87Sr old igneous rocks (granite)"),
+        PB.VarPropScalar("Sr_new_ig_delta",  "unknown", "d87Sr new igneous rocks (basalt)"),
+        PB.VarPropScalar("Sr_mantle_delta",  "unknown", "d87Sr mantle"),
     ]
 
     PB.add_method_do!(
@@ -145,7 +145,7 @@ function PB.register_methods!(rj::ReactionSrSed)
         PB.VarDepScalar("global.DEGASS", "",  "normalized DEGASS forcing"),
     
         PB.VarDepScalar("Sr_sed", "mol",  "sedimentary Sr"),
-        PB.VarDepScalar("Sr_sed_delta", "",  "d87Sr of sedimentary Sr"),
+        PB.VarDepScalar("Sr_sed_delta", "unknown",  "d87Sr of sedimentary Sr"),
         PB.VarDepScalar("Sr_sed_norm", "",  "normalized sedimentary Sr"),    
         PB.VarContribScalar("Sr_sed_sms", "mol yr-1",  "sedimentary Sr source minus sink flux")
     ]
@@ -248,9 +248,9 @@ function PB.register_methods!(rj::ReactionSrLand)
         PB.VarContribScalar("fluxLandtoSedCrust_Sr"=>"fluxLandtoSedCrust.flux_Sr", "mol yr-1",  "Sr flux from land to sedimentary reservoirs",
             attributes=(:field_data=>SrIsotopeType,)),   
     
-        PB.VarDepScalar("sedcrust.Sr_old_ig_delta",  "", "d87Sr old igneous rocks (granite)"),
-        PB.VarDepScalar("sedcrust.Sr_new_ig_delta",  "", "d87Sr new igneous rocks (basalt)"),
-        PB.VarDepScalar("sedcrust.Sr_sed_delta", "",  "d87Sr of sedimentary Sr"),
+        PB.VarDepScalar("sedcrust.Sr_old_ig_delta",  "unknown", "d87Sr old igneous rocks (granite)"),
+        PB.VarDepScalar("sedcrust.Sr_new_ig_delta",  "unknown", "d87Sr new igneous rocks (basalt)"),
+        PB.VarDepScalar("sedcrust.Sr_sed_delta", "unknown",  "d87Sr of sedimentary Sr"),
         PB.VarDepScalar("sedcrust.Sr_sed_norm", "",  "normalized sedimentary Sr"),
     ]
 
@@ -354,8 +354,8 @@ function PB.register_methods!(rj::ReactionSrOceanfloor)
         PB.VarDep("fluxOceanBurial_Ccarb"=>"fluxOceanBurial.flux_Ccarb", "mol yr-1", "carbonate ocean burial flux"),
            
         PB.VarDepScalar("ocean.Sr_norm",        "",         "normalized ocean Sr"),
-        PB.VarDep("ocean.oceanfloor.Sr_delta",  "",         "ocean d87Sr"), 
-        PB.VarDepScalar("sedcrust.Sr_mantle_delta",   "",         "mantle d87Sr"), 
+        PB.VarDep("ocean.oceanfloor.Sr_delta",  "unknown",         "ocean d87Sr"), 
+        PB.VarDepScalar("sedcrust.Sr_mantle_delta",   "unknown",         "mantle d87Sr"), 
     ]
 
     PB.add_method_do!(
