@@ -38,10 +38,10 @@ See [Lenton2018](@cite) Fig. 11
 
 Modify parameters and rerun model:
 ```julia
-default_3C_output = run.output  # keep default 3C output
-PB.setvalue!(PB.get_reaction(run.model, "global", "temp_global").pars.k_c, 8.656)  # change climate sensitivity
-run.output = PALEOmodel.OutputWriters.OutputMemory()  # new empty output so we don't overwrite earlier ouput
-PALEOmodel.ODE.integrate(run, initial_state, modeldata, (-1000e6, 0), solvekwargs=(reltol=1e-4,)); # rerun
+default_3C_output = paleorun.output  # keep default 3C output
+PB.setvalue!(PB.get_reaction(model, "global", "temp_global").pars.k_c, 8.656)  # change climate sensitivity
+paleorun = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
+PALEOmodel.ODE.integrate(paleorun, initial_state, modeldata, (-1000e6, 0), solvekwargs=(reltol=1e-4,)); # rerun
 ```
 
 Compare pCO2:
@@ -49,7 +49,7 @@ Compare pCO2:
 using Plots; plotlyjs(size=(750, 500))  # load Julia Plots.jl and choose PlotlyJS backend
 pCO2atm_3C = PALEOmodel.get_array(default_3C_output, "atm.pCO2atm") # get FieldArray for plotting
 plot(1e6*pCO2atm_3C, label="3C default", ylabel="pCO2 (1e-6 atm)") # plot x1e6
-pCO2atm_6C = PALEOmodel.get_array(run.output, "atm.pCO2atm")   # get FieldArray
+pCO2atm_6C = PALEOmodel.get_array(paleorun.output, "atm.pCO2atm")   # get FieldArray
 plot!(1e6*pCO2atm_6C, label="6C", ylabel="pCO2 (1e-6 atm)") # plot x1e6
 plot!(xlim=(-600e6, 0), ylim=(0, 4000))  # rescale axes
 ```
