@@ -102,7 +102,7 @@ function PB.register_methods!(rj::ReactionLandBergman2004)
             # atm
             ("atm.pO2PAL",  "",           "atmospheric oxygen relative to present-day"),
             ("atm.pCO2PAL", "",           "atmospheric pCO2 relative to present-day"),
-            ("atm.pCO2atm", "ppm",        "atmospheric pCO2"),
+            ("atm.pCO2atm", "atm",        "atmospheric pCO2"),
             ("(atm.CO2_delta)", "per mil",  "atmospheric pCO2 delta 13C"),
             # sedcrust
             ("sedcrust.C_norm",        "",    "Sedimentary carbonate normalized to present day"),
