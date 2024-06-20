@@ -47,10 +47,10 @@ function PB.register_methods!(rj::ReactionCarbBurialAlk)
         PB.VarDepScalar("flux_TAlk"=>"fluxRtoOcean.flux_TAlk",  "mol yr-1"   , "riverine alkalinity flux"),  
         # burial
         PB.VarPropScalar("mccb",   "molC/yr",     "Carbonate burial"),
-        PB.VarContribScalar("ocean.oceanfloor.DIC_sms", "molC/yr", "DIC reservoir source - sink",
+        PB.VarContribScalar("ocean.oceanfloor.DIC_sms", "mol yr-1", "DIC reservoir source - sink",
             attributes=(:field_data=>CIsotopeType,)),
-        PB.VarContribScalar("(ocean.oceanfloor.CAL_sms)", "mol Ca/yr", "Calcium reservoir source - sink"),    
-        PB.VarContribScalar("fluxOceanBurial.flux_Ccarb", "molC/yr", "carbonate burial",
+        PB.VarContribScalar("(ocean.oceanfloor.CAL_sms)", "mol yr-1", "Calcium reservoir source - sink"),    
+        PB.VarContribScalar("fluxOceanBurial.flux_Ccarb", "mol yr-1", "carbonate burial",
             attributes=(:field_data=>CIsotopeType,)),
     ]
 
