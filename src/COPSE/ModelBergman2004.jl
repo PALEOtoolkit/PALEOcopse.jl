@@ -116,16 +116,16 @@ function PB.register_methods!(rj::ReactionModelBergman2004)
     vars_res, vars_sms, vars_dep_res     = PB.Reservoirs.ReservoirLinksVector(
         Dict("CIsotope"=>PB.IsotopeLinear, "SIsotope"=>PB.IsotopeLinear),
         [
-            ("P",           "mol P",    "Marine phosphorus"),
-            ("N",           "mol N",    "Marine nitrogen"),
-            ("O",           "mol O2",   "Atm-ocean oxygen"),
-            ("C::CIsotope",  "mol C",    "Sedimentary carbonate"),
-            ("G::CIsotope",  "mol C",    "Sedimentary organic carbon"),
-            ("A::CIsotope",  "mol C",    "Atm-ocean inorganic carbon"),
-            ("CAL",         "mol Ca",   "Marine calcium"),
-            ("GYP::SIsotope","mol S",    "Sedimentary gypsum"),
-            ("PYR::SIsotope","mol S",    "Sedimentary pyrite"),
-            ("S::SIsotope",  "mol S",    "Marine sulphate")
+            ("P",           "mol",    "Marine phosphorus"),
+            ("N",           "mol",    "Marine nitrogen"),
+            ("O",           "mol",   "Atm-ocean oxygen"),
+            ("C::CIsotope",  "mol",    "Sedimentary carbonate"),
+            ("G::CIsotope",  "mol",    "Sedimentary organic carbon"),
+            ("A::CIsotope",  "mol",    "Atm-ocean inorganic carbon"),
+            ("CAL",         "mol",   "Marine calcium"),
+            ("GYP::SIsotope","mol",    "Sedimentary gypsum"),
+            ("PYR::SIsotope","mol",    "Sedimentary pyrite"),
+            ("S::SIsotope",  "mol",    "Marine sulphate")
         ])
  
     
@@ -134,7 +134,7 @@ function PB.register_methods!(rj::ReactionModelBergman2004)
     vars_dep_stateandeqb = PB.VarVector(PB.VarDepScalar, 
         [
             ("tforce",  "yr"   , "time for external forcings"),
-            ("SOLAR",   "W/m^2", "solar luminosity"),
+            ("SOLAR",   "W m-2", "solar luminosity"),
             ("UPLIFT",  "",      "uplift scaling"),
             ("DEGASS",  "",      "degassing scaling"),
             ("W",       "",      "plant weathering scaling"),
@@ -149,7 +149,7 @@ function PB.register_methods!(rj::ReactionModelBergman2004)
         [
             ("pO2PAL",  "",           "atmospheric oxygen relative to present-day"),
             ("pCO2PAL", "",           "atmospheric pCO2 relative to present-day"),
-            ("pCO2atm", "ppm",        "atmospheric pCO2"),
+            ("pCO2atm", "atm",        "atmospheric pCO2"),
             ("d_mccb", "per mil",     "D13C fractionation carbonate - atm-ocean inorganic carbon"),
             ("d_locb", "per mil",     "D13C fractionation land organic carbon burial - atm-ocean inorganic carbon"),
             ("d_mocb", "per mil",     "D13C fractionation marine organic carbon burial - atm-ocean inorganic carbon"),

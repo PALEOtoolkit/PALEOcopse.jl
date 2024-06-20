@@ -28,7 +28,7 @@ skipped_testsets = [
     comparemodel = CompareOutput.copse_output_load("reloaded", "reloaded_baseline")
 
     model = copse_reloaded_reloaded_expts("reloaded", ["baseline"])
-    initial_state, modeldata = PALEOmodel.initialize!(model)
+    initial_state, modeldata = PALEOmodel.initialize!(model; check_units_opt=:error)
 
     run = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
 
@@ -88,7 +88,7 @@ end
 
     model = copse_reloaded_bergman2004_expts("bergman2004", ["baseline"])
 
-    initial_state, modeldata = PALEOmodel.initialize!(model)
+    initial_state, modeldata = PALEOmodel.initialize!(model; check_units_opt=:error)
 
     run = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
 
@@ -147,7 +147,7 @@ end
 
     model = copse_bergman2004_bergman2004_expts(["baseline"])
 
-    initial_state, modeldata = PALEOmodel.initialize!(model)
+    initial_state, modeldata = PALEOmodel.initialize!(model; check_units_opt=:error)
 
     run = PALEOmodel.Run(model=model, output=PALEOmodel.OutputWriters.OutputMemory())
     
