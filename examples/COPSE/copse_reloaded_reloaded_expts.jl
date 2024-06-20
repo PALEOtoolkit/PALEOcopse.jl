@@ -1,26 +1,7 @@
 
 function copse_reloaded_reloaded_expts(
-    basemodel, expts;
-    modelpars=Dict{}(),
+    model, expts
 )
-
-    ####################
-    # set basemodel
-    ####################
-    if basemodel == "reloaded"
-        
-        # modelpars = Dict("CIsotope"=>"ScalarData", "SIsotope"=>"ScalarData", "CIsotopeReacts"=>false)       
-        model = PB.create_model_from_config(
-            joinpath(@__DIR__, "COPSE_reloaded_reloaded_cfg.yaml"), 
-            "model1",
-            modelpars=modelpars,
-            # sort_methods_algorithm=PB.dfs_methods
-        )
-        
-    else
-        error("unknown basemodel ", basemodel)
-    end
-
 
     ###############################################
     # choose an 'expt' (a delta to the base model)

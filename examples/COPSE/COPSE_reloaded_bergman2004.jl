@@ -27,27 +27,31 @@ global_logger(ConsoleLogger(stderr,Logging.Info))
 # comparemodel = CompareOutput.copse_output_load("bergman2004","")
 # comparemodel = CompareOutput.copse_output_load("reloaded","original_baseline")
 comparemodel = nothing
-model = copse_reloaded_bergman2004_expts(
-    "bergman2004",
-    ["baseline"],
+model = PB.create_model_from_config(
+    joinpath(@__DIR__, "COPSE_reloaded_bergman2004_cfg.yaml"), "model1"
 )
+copse_reloaded_bergman2004_expts(model, ["baseline"])
 tspan=(-1000e6, 0)
+
 
 # No S cycle
 # comparemodel = CompareOutput.copse_output_load("reloaded","original_baseline")
-# model = copse_reloaded_bergman2004_expts(
-#     "bergman2004noS", 
-#     ["baseline"],
-#     comparemodel=comparemodel,
-#     comparedata=true,
+# model = PB.create_model_from_config(
+#     joinpath(@__DIR__, "COPSE_reloaded_bergman2004_cfg.yaml"), "model1";
+#     modelpars=Dict("enableS"=>false, "disableS"=>true),
 # )
+# 
 # tspan=(-1000e6, 0)
 
 
 # Modern steady-state (constant forcings) with CO2 pulse
 # comparemodel=nothing
-# model = copse_reloaded_bergman2004_expts(
-#     "bergman2004", 
+# model = PB.create_model_from_config(
+#     joinpath(@__DIR__, "COPSE_reloaded_bergman2004_cfg.yaml"), "model1";
+#     modelpars=Dict("tforcevar"=>"global.tforce_constant"),
+# )
+# copse_reloaded_bergman2004_expts(
+#     model, 
 #     [
 #         ("tforce_constant", 0.0),
 #         "VCI",
@@ -56,9 +60,6 @@ tspan=(-1000e6, 0)
 #         ("CO2pulse", 6e18, 0.1e6, 1e5),
 #         ("setpar", "global", "reservoir_A", "f_atfrac", "quadratic"),
 #     ], 
-#     comparemodel=nothing,
-#     comparedata=false,
-#     modelpars=Dict("tforcevar"=>"global.tforce_constant"),
 # )
 # tspan=(-10e6, 10e6)
 
@@ -72,11 +73,11 @@ println("initial_deriv", initial_deriv)
 
 println("integrate, no jacobian")
                                           
-run = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
+paleorun = PALEOmodel.Run(model=model, output = PALEOmodel.OutputWriters.OutputMemory())
 
 # NB first run includes JIT time
 @time PALEOmodel.ODE.integrate(
-    run, initial_state, modeldata, tspan,
+    paleorun, initial_state, modeldata, tspan,
     solvekwargs=( # https://diffeq.sciml.ai/stable/basics/common_solver_opts/
         reltol=1e-4,
         # saveat=1e6,
@@ -99,21 +100,21 @@ gr(size=(1600, 900)) # GR backend with large screen size
 pager=PALEOmodel.PlotPager(9, (legend_background_color=nothing, ))
 
 
-copse_reloaded_bergman2004_plot(run.output, pager=pager)
+copse_reloaded_bergman2004_plot(paleorun.output, pager=pager)
 
 ###################################
 # Check diff against archived Matlab model output
 ######################################
 
 if !isnothing(comparemodel)
-    diff = CompareOutput.compare_copse_output(run.output, comparemodel)
+    diff = CompareOutput.compare_copse_output(paleorun.output, comparemodel)
     firstpoint=100
     show(sort(DataFrames.describe(diff[firstpoint:end, :], :std, :min, :max, :mean), :std), allrows=true)
 
     println()
 
     # Plots to compare two model runs
-    CompareOutput.copse_reloaded_comparecopse(run.output, comparemodel, include_Sr=false, mccb_extrafields=true, pager=pager) 
+    CompareOutput.copse_reloaded_comparecopse(paleorun.output, comparemodel, include_Sr=false, mccb_extrafields=true, pager=pager) 
 end
 
 ####################################################################################################
@@ -122,9 +123,9 @@ end
 
 if false
     # include("compare_data.jl")
-    # copse_reloaded_comparedata([run.output], include_Sr=false, pager=pager)
+    # copse_reloaded_comparedata([paleorun.output], include_Sr=false, pager=pager)
 else
-    copse_reloaded_bergman2004_plot_summary([run.output], pager=pager)
+    copse_reloaded_bergman2004_plot_summary([paleorun.output], pager=pager)
 end
 
 
