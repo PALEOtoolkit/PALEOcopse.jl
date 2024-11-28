@@ -156,7 +156,7 @@ Base.@kwdef mutable struct ReactionForce_Bbergman2004 <:  PB.AbstractReaction
     Btimes =    [-150e6,      -140e6,      -110e6,      -90e6,       -50e6,   	-10e6]
     Bvals  =    [0.75,       0.83776596, 0.90990691,  0.96110372,	0.98902926,	 1.0]
 
-    interp_B = Interpolations.LinearInterpolation(
+    interp_B = Interpolations.linear_interpolation(
         Btimes,
         Bvals,
         extrapolation_bc=Interpolations.Flat()
@@ -199,7 +199,7 @@ Base.@kwdef mutable struct ReactionForce_CPlandrelbergman2004 <: PB.AbstractReac
     CPlandtimes =    [-355e6,      -345e6,      -290e6,      -280e6]
     CPlandvals  =    [1.0,          2.0,        2.0,        1.0]
 
-    interp_CPland = Interpolations.LinearInterpolation(
+    interp_CPland = Interpolations.linear_interpolation(
         CPlandtimes, 
         CPlandvals, 
         extrapolation_bc = Interpolations.Flat()
