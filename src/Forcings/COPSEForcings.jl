@@ -96,16 +96,16 @@ function PB.register_methods!(rj::ReactionForce_UDWEbergman2004)
     rj.C_514_forcings["EVO"] = copse_forcings[:, 5]
 
     # create interpolation objects
-    rj.interp_UPLIFT = Interpolations.LinearInterpolation(
+    rj.interp_UPLIFT = Interpolations.linear_interpolation(
         rj.C_514_forcings["Tyr"], rj.C_514_forcings["UPLIFT"], extrapolation_bc = 1.0
     )
-    rj.interp_DEGASS = Interpolations.LinearInterpolation(
+    rj.interp_DEGASS = Interpolations.linear_interpolation(
         rj.C_514_forcings["Tyr"], rj.C_514_forcings["DEGASS"], extrapolation_bc = 1.0
     )
-    rj.interp_EVO = Interpolations.LinearInterpolation(
+    rj.interp_EVO = Interpolations.linear_interpolation(
         rj.C_514_forcings["Tyr"], rj.C_514_forcings["EVO"], extrapolation_bc = Interpolations.Flat()
     )
-    rj.interp_W = Interpolations.LinearInterpolation(
+    rj.interp_W = Interpolations.linear_interpolation(
         rj.C_514_forcings["Tyr"], rj.C_514_forcings["W"], extrapolation_bc = Interpolations.Flat()
     )
 
@@ -156,7 +156,7 @@ Base.@kwdef mutable struct ReactionForce_Bbergman2004 <:  PB.AbstractReaction
     Btimes =    [-150e6,      -140e6,      -110e6,      -90e6,       -50e6,   	-10e6]
     Bvals  =    [0.75,       0.83776596, 0.90990691,  0.96110372,	0.98902926,	 1.0]
 
-    interp_B = Interpolations.LinearInterpolation(
+    interp_B = Interpolations.linear_interpolation(
         Btimes,
         Bvals,
         extrapolation_bc=Interpolations.Flat()
@@ -199,7 +199,7 @@ Base.@kwdef mutable struct ReactionForce_CPlandrelbergman2004 <: PB.AbstractReac
     CPlandtimes =    [-355e6,      -345e6,      -290e6,      -280e6]
     CPlandvals  =    [1.0,          2.0,        2.0,        1.0]
 
-    interp_CPland = Interpolations.LinearInterpolation(
+    interp_CPland = Interpolations.linear_interpolation(
         CPlandtimes, 
         CPlandvals, 
         extrapolation_bc = Interpolations.Flat()
@@ -229,7 +229,7 @@ function do_force_CPlandrelbergman2004(m::PB.ReactionMethod, (vars, ), cellrange
     return nothing
 end
 
-const LINEARINTERPOLATION_TEMPLATE = Interpolations.LinearInterpolation(
+const LINEARINTERPOLATION_TEMPLATE = Interpolations.linear_interpolation(
     [0.0, 1.0], 
     [NaN, NaN],
     extrapolation_bc = Interpolations.Flat()
@@ -344,7 +344,7 @@ function setup_force_spreadsheet(m::PB.ReactionMethod, pars, (), cellrange::PB.A
     println(io, "    extrapolating out-of-range tforce > $(last(rj.force_times)) (yr) to $extrap_future")
    
     # create interpolation object
-    rj.interp_FORCE = Interpolations.LinearInterpolation(
+    rj.interp_FORCE = Interpolations.linear_interpolation(
         rj.force_times, rj.force_values, 
         extrapolation_bc = Interpolations.Flat() # only used for extrap_value_past, future == NaN
     )
