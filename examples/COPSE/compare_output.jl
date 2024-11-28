@@ -319,7 +319,7 @@ function compare_copse_output(output, comparison)
                     firstoutputpoint += 1
                 end
                 firstoutputpoint == 1 || println("    starting at output index $firstoutputpoint to skip identical tmodel values")
-                interp_out = Interpolations.LinearInterpolation(
+                interp_out = Interpolations.linear_interpolation(
                     output_tmodel[firstoutputpoint:end],
                     PB.get_total.(PB.get_data(output, outdom*"."*outfield)[firstoutputpoint:end]))
                 out_i = interp_out(comp_tmodel)
