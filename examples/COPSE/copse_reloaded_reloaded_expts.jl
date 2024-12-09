@@ -140,8 +140,9 @@ function copse_reloaded_reloaded_plot(
         have_CO2pulse = PB.has_variable(output, "global.CO2pulse")
     end
 
-    # Conservation checks
+    
     pager(
+        # Conservation checks
         plot(title="Total carbon",          output, ["global.total_C"], ylabel="mol C"; extrakwargs...),
         plot(title="Total carbon moldelta", output, ["global.total_C.v_moldelta"], ylabel="mol C * per mil"; extrakwargs...),
         plot(title="Total sulphur",         output, ["global.total_S"], ylabel="mol S"; extrakwargs...),
@@ -154,7 +155,6 @@ function copse_reloaded_reloaded_plot(
         plot(title="Land area forcings",    output, ["land.BA_AREA", "land.GRAN_AREA", "global.ORGEVAP_AREA"],  ylim=(0, 2.5), ylabel="normalized forcing"; extrakwargs...),
         plot(title="Basalt area forcings",  output, ["global.CFB_area", "land.oib_area"],  ylabel="area (km^2)",),
         plot(title="Evolutionary forcings", output, "global.".*["EVO", "W", "Bforcing", "CPland_relative", "F_EPSILON", "COAL"], ylabel="normalized forcing"; extrakwargs...),    
-    
         have_CO2pulse ?
             plot(title="CO2pulse", output,  ["global.CO2pulse"],  ylabel="CO2 pulse (mol C yr-1)"; extrakwargs...) : :skip,
 
@@ -172,9 +172,9 @@ function copse_reloaded_reloaded_plot(
         plot(title="Land biota",            output, ["land.V_T", "land.V_o2", "land.V_co2", "land.V_npp", "land.firef", "land.VEG", "global.COAL", "atm.pO2PAL"]; extrakwargs...),
         plot(title="Sulphur isotopes",      output, ["ocean.S_delta", "sedcrust.PYR_delta", "sedcrust.GYP_delta"], ylabel="delta 34S (per mil)"; extrakwargs...),
         plot(title="Carbon isotopes",       output, ["atmocean.A_delta", "ocean.DIC_delta", "atm.CO2_delta", "ocean.mccb_delta", "sedcrust.C_delta"], ylabel="delta 13C (per mil)"; extrakwargs...),
-        plot(title="Sr sed reservoir",      output, ["sedcrust.Sr_sed"], ylabel="Sr_sed (mol)"; extrakwargs...),    
-        plot(title="Sr ocean reservoir",    output, ["ocean.Sr"], ylabel="Sr (mol)"; extrakwargs...), 
-        plot(title="Sr fluxes",             output, ["fluxRtoOcean.flux_Sr", "fluxOceanBurial.flux_total_Sr", "fluxOceanfloor.soluteflux_Sr" ], ylabel="Sr flux (mol yr-1)"; extrakwargs...),
+        plot(title="Sr sed reservoir",      output, ["sedcrust.Sr_sed"], ylabel="Sr_sed (mol)"; extrakwargs...),
+        plot(title="Sr ocean reservoir",    output, ["ocean.Sr"], ylabel="Sr (mol)"; extrakwargs...),
+        plot(title="Sr fluxes",             output, ["fluxRtoOcean.flux_Sr", "fluxOceanBurial.flux_total_Sr", "fluxOceanfloor.soluteflux_total_Sr" ], ylabel="Sr flux (mol yr-1)"; extrakwargs...),
         plot(title="Sr isotopes",           output, ["sedcrust.Sr_mantle_delta", "sedcrust.Sr_new_ig_delta", "sedcrust.Sr_old_ig_delta", "sedcrust.Sr_sed_delta", "ocean.Sr_delta"], ylabel="87Sr"; extrakwargs...),
 
         :newpage,  # flush partial screen

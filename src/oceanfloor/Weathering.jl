@@ -177,7 +177,7 @@ function do_seafloor_weathering(
     # total flux, without isotope contribution
     sfw_total_noisotope = vars.sfw_relative[] * pars.k_sfw[] 
 
-    # isotope composition from local DIC with optional offset 
+    # isotope composition from local DIC with optional global offset 
     if CIsotopeType <: PB.AbstractIsotopeScalar
         if      pars.f_sfw_d13C[] == "delta_DIC"
             d13C_offset = 0.0
@@ -189,7 +189,7 @@ function do_seafloor_weathering(
     end
 
     # distribute total flux to seafloor boxes, adding isotope composition
-    @inbounds for i in cellrange.indices
+    for i in cellrange.indices
         vars.sfw[i] = @PB.isotope_totaldelta(
             CIsotopeType, 
             sfw_total_noisotope*pars.sfw_distribution[i], 

@@ -36,8 +36,9 @@ model1:
                     class: ReactionFluxTarget
                     
                     parameters:
+                        flux_totals: true
                         target_prefix: soluteflux_
-                        fluxlist: ["DIC::CIsotope", "TAlk", "Sr::SrIsotope"]
+                        fluxlist: ["DIC::CIsotope", "TAlk", "Ca", "Sr::SrIsotope"]
 
 
         fluxOceanBurial:
@@ -414,9 +415,170 @@ model1:
                         k_Sr_sedw:  17e9                # mol Sr yr-1 sediment weathering
 
 
-        sedcrust:
+        oceansurface:
 
+            reactions:
+                transfer_RtoOcean:
+                    class: ReactionFluxTransfer
+                    parameters:
+                        input_fluxes:         fluxRtoOcean.flux_$fluxname$
+                        output_fluxes:        ocean.oceansurface.$fluxname$_sms                       
+                    variable_links:                        
+                        output_SO4:           ocean.oceansurface.S_sms    
+
+                transfer_SedCrusttoAOcean:
+                    class: ReactionFluxTransfer
+                    parameters:
+                        input_fluxes:         fluxSedCrusttoAOcean.flux_$fluxname$
+                        output_fluxes:        ocean.oceansurface.$fluxname$_sms
+                    variable_links:
+                        # output_S:             ocean.oceansurface.S_sms
+
+
+        ocean:
             
+
+            # subdomains:
+            #    oceansurface: [1]  # for river input
+            #    oceanfloor: [1]    # for oceanfloor solute flux 
+
+            reactions:
+                oceantransport:
+
+                    class: ReactionOceanNoTransport
+
+                    parameters:
+
+                        area:  [3.6e14]               
+                        depth: [3688.0]               
+     
+                reservoir_P:
+                    class: ReactionReservoirScalar
+                   
+                    variable_links:
+                        R*: P*
+                    variable_attributes:
+                        R:norm_value:           3.1e15
+                        R:initial_value:        3.1e15
+
+                reservoir_N:
+                    class: ReactionReservoirScalar
+                   
+                    variable_links:
+                        R*: N*
+                    variable_attributes:
+                        R:norm_value:           4.35e16
+                        R:initial_value:        4.35e16
+
+                reservoir_S:
+                    class: ReactionReservoirScalar
+                    parameters:
+                        field_data: external%SIsotope
+                        
+                    variable_links:
+                        R*: S*
+                    variable_attributes:
+                        R:norm_value:           4e19
+                        R:initial_value:        4e19
+                        R:initial_delta:        20.0  # per mil
+
+                reservoir_Sr:
+                    class: ReactionReservoirScalar
+                    parameters:
+                        field_data: external%SrIsotope
+                        
+                    variable_links:
+                        R*: Sr*
+                    variable_attributes:
+                        R:norm_value:           1.2e17
+                        R:initial_value:        1.2e17
+                        R:initial_delta:        0.708   # reasonable average value for Phanerozoic
+
+                marinebiota_copse:
+                    class: ReactionMarineBiotaCOPSE
+                    parameters:
+                        newp0:                  225.956
+                       
+                        f_anoxia:               newanoxia
+                        k_logistic:             12.0
+                        k_uptake:               0.5
+                        k1_oxfrac:              0.9975
+
+                        f_nfix_power:           2.0
+                        f_denit:                new
+                        k3_nfix:                8.667e12
+                        k4_denit:               4.3e12
+
+                oceanburial_copse:
+                    class: ReactionOceanBurialCOPSE
+                    variable_links:                        
+                        DIC_sms: atmocean.A_sms                        
+                        DIC_delta: DIC_delta # provided by CIsotopes
+                        # DIC*: atmocean.A # dont do this !!! (overwrites DIC_delta with atmocean.A_delta)
+                        O: atmocean.O       # relink O, O_*, NOT OX*
+                        O_*: atmocean.O_*
+                        CAL_norm: global.CAL_NORM   # [Ca] from forcing
+                    parameters:
+                        CNsea0:                 37.5
+                        CPsea0:                 250.0
+
+                        f_mocb:                 original
+                        f_mocb_b:               2.0
+                        k2_mocb:                2.5e12
+
+                        f_CPsea:                Fixed
+                        f_CPsea_VCI_oxic:       250.0
+                        f_CPsea_VCI_anoxic:     4000.0
+                        f_fepb:                 pdep
+                        f_capb:                 original
+                        k6_fepb:                1e10
+                        k7_capb:                2e10
+
+                        f_pyrburial:            copse_O2
+                        # f_gypburial:            Caforced # not needed
+                        # f_SRedoxAlk:           off
+                        f_sisotopefrac:         fixed
+                        k_mpsb:                 0.7e12
+                        k_mgsb:                 2.5e12
+
+                
+        oceanfloor:
+
+            reactions:
+                carbburial: 
+                    class: ReactionCarbBurialAlk
+                    variable_links:                        
+
+                sfw:
+                    class: ReactionSeafloorWeathering
+                    parameters:
+                        f_sfw_force:            DEGASS
+                        f_sfw_opt:              sfw_temp
+                        f_sfw_d13C:             delta_mccb
+
+                        k_sfw:                  3e12 # mol CaCO3 yr-1
+
+                    variable_links:
+                        # DIC_delta:              ocean.DIC_delta
+
+                Sr_oceanfloor:
+                    class: ReactionSrOceanfloor
+                    parameters:
+                        k_Sr_mantle:            7.3e9    # mol Sr yr-1 direct mantle flux
+                        f_Sr_sedb:              silwcarbw
+
+
+                transfer_Oceanfloor:
+                    class: ReactionFluxTransfer
+                    parameters:
+                        input_fluxes:         fluxOceanfloor.soluteflux_$fluxname$
+                        output_fluxes:        ocean.oceanfloor.$fluxname$_sms
+                    variable_links:
+                        # output_Ca:            ocean.oceanfloor.CAL_sms  # not used by COPSE reloaded (as CAL is a forcing)
+                        # TAlk is not used (handled by ReactionCarbBurialAlk)
+                        # DIC is handled by ReactionFluxTransfer in atmocean domain
+
+        sedcrust:
 
             reactions:
 
@@ -521,163 +683,4 @@ model1:
                         output_Corg:            G_sms            # fix naming Corg = G                        
                         output_Ccarb:           C_sms            # fix naming Ccarb = C
                         output_Sr:              Sr_sed_sms            # fix naming
-
-        ocean:
-            
-
-            # subdomains:
-            #    oceansurface: [1]  # for river input
-            #    oceanfloor: [1]    # for oceanfloor solute flux 
-
-            reactions:
-                reservoir_P:
-                    class: ReactionReservoirScalar
-                   
-                    variable_links:
-                        R*: P*
-                    variable_attributes:
-                        R:norm_value:           3.1e15
-                        R:initial_value:        3.1e15
-
-                reservoir_N:
-                    class: ReactionReservoirScalar
-                   
-                    variable_links:
-                        R*: N*
-                    variable_attributes:
-                        R:norm_value:           4.35e16
-                        R:initial_value:        4.35e16
-
-                reservoir_S:
-                    class: ReactionReservoirScalar
-                    parameters:
-                        field_data: external%SIsotope
-                        
-                    variable_links:
-                        R*: S*
-                    variable_attributes:
-                        R:norm_value:           4e19
-                        R:initial_value:        4e19
-                        R:initial_delta:        20.0  # per mil
-
-                reservoir_Sr:
-                    class: ReactionReservoirScalar
-                    parameters:
-                        field_data: external%SrIsotope
-                        
-                    variable_links:
-                        R*: Sr*
-                    variable_attributes:
-                        R:norm_value:           1.2e17
-                        R:initial_value:        1.2e17
-                        R:initial_delta:        0.708   # reasonable average value for Phanerozoic
-
-                marinebiota_copse:
-                    class: ReactionMarineBiotaCOPSE
-                    parameters:
-                        newp0:                  225.956
-                       
-                        f_anoxia:               newanoxia
-                        k_logistic:             12.0
-                        k_uptake:               0.5
-                        k1_oxfrac:              0.9975
-
-                        f_nfix_power:           2.0
-                        f_denit:                new
-                        k3_nfix:                8.667e12
-                        k4_denit:               4.3e12
-
-                oceanburial_copse:
-                    class: ReactionOceanBurialCOPSE
-                    variable_links:                        
-                        DIC_sms: atmocean.A_sms                        
-                        DIC_delta: DIC_delta # provided by CIsotopes
-                        # DIC*: atmocean.A # dont do this !!! (overwrites DIC_delta with atmocean.A_delta)
-                        O: atmocean.O       # relink O, O_*, NOT OX*
-                        O_*: atmocean.O_*
-                        CAL_norm: global.CAL_NORM   # [Ca] from forcing
-                    parameters:
-                        CNsea0:                 37.5
-                        CPsea0:                 250.0
-
-                        f_mocb:                 original
-                        f_mocb_b:               2.0
-                        k2_mocb:                2.5e12
-
-                        f_CPsea:                Fixed
-                        f_CPsea_VCI_oxic:       250.0
-                        f_CPsea_VCI_anoxic:     4000.0
-                        f_fepb:                 pdep
-                        f_capb:                 original
-                        k6_fepb:                1e10
-                        k7_capb:                2e10
-
-                        f_pyrburial:            copse_O2
-                        # f_gypburial:            Caforced # not needed
-                        # f_SRedoxAlk:           off
-                        f_sisotopefrac:         fixed
-                        k_mpsb:                 0.7e12
-                        k_mgsb:                 2.5e12
-
-                
-        oceanfloor:
-
-            
-
-            reactions:
-                carbburial: 
-                    class: ReactionCarbBurialAlk
-                    variable_links:                        
-                        DIC_sms: atmocean.A_sms
-
-                sfw:
-                    class: ReactionSeafloorWeathering
-                    parameters:
-                        f_sfw_force:            DEGASS
-                        f_sfw_opt:              sfw_temp
-                        f_sfw_d13C:             delta_mccb
-
-                        k_sfw:                  3e12 # mol CaCO3 yr-1
-
-                    variable_links:
-                        DIC_delta:              ocean.DIC_delta
-
-                Sr_oceanfloor:
-                    class: ReactionSrOceanfloor
-                    parameters:
-                        k_Sr_mantle:            7.3e9    # mol Sr yr-1 direct mantle flux
-                        f_Sr_sedb:              silwcarbw
-
-
-                transfer_Oceanfloor:
-                    class: ReactionFluxTransfer
-                    parameters:
-                        input_fluxes:         fluxOceanfloor.soluteflux_$fluxname$
-                        output_fluxes:        ocean.oceanfloor.$fluxname$_sms                       
-                    variable_links:                        
-                        
-
-        oceansurface:
-
-            
-
-            reactions:
-                transfer_RtoOcean:
-                    class: ReactionFluxTransfer
-                    parameters:
-                        input_fluxes:         fluxRtoOcean.flux_$fluxname$
-                        output_fluxes:        ocean.oceansurface.$fluxname$_sms                       
-                    variable_links:                        
-                        output_SO4:           ocean.oceansurface.S_sms    
-
-                transfer_SedCrusttoAOcean:
-                    class: ReactionFluxTransfer
-                    parameters:
-                        input_fluxes:         fluxSedCrusttoAOcean.flux_$fluxname$
-                        output_fluxes:        ocean.oceansurface.$fluxname$_sms
-                    variable_links:
-                        # output_S:             ocean.oceansurface.S_sms
-
- #               model_Bergman2004:
- #                   class: ReactionModelBergman2004
 
