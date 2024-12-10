@@ -8,13 +8,15 @@ using PALEOboxes.DocStrings
 
 Marine carbonate burial from instantaneous alkalinity balance
 
-Generates burial flux `fluxOceanBurial.flux_Ccarb = 0.5 * flux_TAlk`, adds reservoirs fluxes to `DIC_sms` and
-optionally `CAL_sms`.
+Alkalinity flux `flux_TAlk` is by default linked to `flux_TAlk -> fluxRtoOcean.flux_TAlk`,
+ie to generate a carbonate burial sink for riverine alkalinity input.
 
-Fluxes are added to flux couplers:
+Generates burial flux `fluxOceanBurial.flux_Ccarb = 0.5 * flux_TAlk`,
+adds solute fluxes (-ve) to `fluxOceanfloor.soluteflux_DIC` and optionally `fluxOceanfloor.soluteflux_Ca`.
+
+This means the output fluxes are added to flux couplers:
 - `fluxOceanBurial`: ocean burial fluxes
-
-Default linking for `flux_TAlk` is `flux_TAlk -> fluxRtoOcean.flux_TAlk`, ie carbonate burial sink for riverine alkalinity input.
+- `fluxOceanSolute`: ocean floor solute fluxes (-ve fluxes to ocean)
 
 # Parameters
 $(PARS)
@@ -47,11 +49,6 @@ function PB.register_methods!(rj::ReactionCarbBurialAlk)
         PB.VarDepScalar("flux_TAlk"=>"fluxRtoOcean.flux_TAlk",  "mol yr-1"   , "riverine alkalinity flux"),  
         # burial
         PB.VarPropScalar("mccb",   "molC/yr",     "Carbonate burial"),
-        PB.VarContribScalar("ocean.oceanfloor.DIC_sms", "mol yr-1", "DIC reservoir source - sink",
-            attributes=(:field_data=>CIsotopeType,)),
-        PB.VarContribScalar("(ocean.oceanfloor.CAL_sms)", "mol yr-1", "Calcium reservoir source - sink"),    
-        PB.VarContribScalar("fluxOceanBurial.flux_Ccarb", "mol yr-1", "carbonate burial",
-            attributes=(:field_data=>CIsotopeType,)),
     ]
 
     if CIsotopeType <: PB.AbstractIsotopeScalar
@@ -67,10 +64,23 @@ function PB.register_methods!(rj::ReactionCarbBurialAlk)
         )
     end
 
+    # flux couplers
+    fluxOceanBurial = PB.Fluxes.FluxContrib(
+        "fluxOceanBurial.flux_",
+        ["Ccarb::$CIsotopeType"],
+        alloptional=false)
+    
+    fluxOceanfloorSolute = PB.Fluxes.FluxContrib(
+        "fluxOceanfloor.soluteflux_",
+        ["DIC::$CIsotopeType", "(Ca)"],
+        alloptional=false)
+
     PB.add_method_do!(
         rj,
         do_carb_burial,
         (
+            PB.VarList_namedtuple_fields(fluxOceanBurial), 
+            PB.VarList_namedtuple_fields(fluxOceanfloorSolute),
             PB.VarList_namedtuple(vars),
         ),
         p=CIsotopeType
@@ -81,7 +91,7 @@ end
 
 
 # Calculate rates
-function do_carb_burial(m::PB.ReactionMethod,  (vars, ), cellrange::PB.AbstractCellRange, deltat)
+function do_carb_burial(m::PB.ReactionMethod,  (fluxOceanBurial, fluxOceanfloorSolute, vars),  cellrange::PB.AbstractCellRange, deltat)
    
     CIsotopeType = m.p
 
@@ -96,9 +106,10 @@ function do_carb_burial(m::PB.ReactionMethod,  (vars, ), cellrange::PB.AbstractC
     vars.mccb[]                = 0.5*vars.flux_TAlk[]  # alkalinity balance
     mccb_isotope            = @PB.isotope_totaldelta(CIsotopeType, vars.mccb[], vars.mccb_delta[])
     
-    PB.add_if_available(vars.CAL_sms, -vars.mccb[])
-    vars.DIC_sms[]             += -mccb_isotope
-    vars.flux_Ccarb[] += mccb_isotope
+    PB.add_if_available(fluxOceanfloorSolute.Ca, -vars.mccb[])
+
+    fluxOceanBurial.Ccarb[]    += mccb_isotope
+    fluxOceanfloorSolute.DIC[] -= mccb_isotope
 
     return nothing
 end

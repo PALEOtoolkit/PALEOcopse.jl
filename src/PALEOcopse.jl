@@ -30,8 +30,9 @@ if VERSION >= v"1.8.0" # negligible benefit from precompile prior to Julia 1.8.0
         
         configlist = [
             (joinpath(@__DIR__, "../examples/COPSE/COPSE_bergman2004_bergman2004_cfg.yaml"), "Bergman2004"),
-            (joinpath(@__DIR__, "../examples/COPSE/COPSE_reloaded_bergman2004_cfg.yaml"), "model1"),
-            (joinpath(@__DIR__, "../examples/COPSE/COPSE_reloaded_reloaded_cfg.yaml"), "model1"),
+            # omit as these now require PALEOocean for ReactionOceanNoTransport
+            # (joinpath(@__DIR__, "../examples/COPSE/COPSE_reloaded_bergman2004_cfg.yaml"), "model1"),
+            # (joinpath(@__DIR__, "../examples/COPSE/COPSE_reloaded_reloaded_cfg.yaml"), "model1"),
         ]
         @PrecompileTools.compile_workload begin
             # all calls in this block will be precompiled, regardless of whether

@@ -8,6 +8,7 @@ import PALEOboxes as PB
 import PALEOmodel
 
 import PALEOcopse
+import PALEOocean
 
 include("compare_output.jl")
 

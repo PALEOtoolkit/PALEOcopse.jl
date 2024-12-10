@@ -180,10 +180,17 @@ end
 """
     ReactionOceanBurialCOPSE
 
-COPSE Bergman(2004), COPSE Reloaded Lenton etal (2018) 0D ocean N, P, Corg, S burial 
+COPSE Bergman(2004), COPSE Reloaded Lenton etal (2018) 0D ocean N, P, Corg, PYR, GYP burial 
 
-Fluxes are added to flux couplers:
-- `fluxOceanBurial`: ocean burial fluxes
+This Reaction runs in a 0D ocean Domain.
+
+Burial fluxes are subtracted from state variable time derivatives `N_sms`, `P_sms`, `DIC_sms`, `S_sms`,
+as well as adding a net oxygen source `O_sms` due to `Corg` and `PYR` burial.
+
+Burial fluxes are added to `fluxOceanBurial.flux_P`, `fluxOceanBurial.flux_P`, ``fluxOceanBurial.flux_Corg`,
+``fluxOceanBurial.flux_PYR`, ``fluxOceanBurial.flux_GYP`.
+
+Carbonate carbon burial is handled separately by `ReactionCarbBurialAlk`, seafloor weathering by `ReactionSeafloorWeathering`.
 
 # Parameters
 $(PARS)
@@ -261,15 +268,6 @@ Base.@kwdef mutable struct ReactionOceanBurialCOPSE{P} <: PB.AbstractReaction
 
 end
 
-function PB.set_model_geometry(rj::ReactionOceanBurialCOPSE, model::PB.Model)
-    # TODO - not the right place for this ? 
-    # define a 1 cell grid
-    rj.domain.grid = PB.Grids.UnstructuredVectorGrid(ncells=1)
-    PB.Grids.set_subdomain!(rj.domain.grid, "oceansurface", PB.Grids.BoundarySubdomain([1]), true)
-    PB.Grids.set_subdomain!(rj.domain.grid, "oceanfloor",   PB.Grids.BoundarySubdomain([1]), true)
-
-    return nothing
-end
 
 function PB.register_methods!(rj::ReactionOceanBurialCOPSE)
 
