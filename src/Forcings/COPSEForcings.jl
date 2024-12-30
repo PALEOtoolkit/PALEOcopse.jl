@@ -210,7 +210,7 @@ function PB.register_methods!(rj::ReactionForce_CPlandrelbergman2004)
 
     vars = [
         PB.VarDepScalar("tforce", "yr",  "historical time at which to apply forcings, present = 0 yr"),
-        PB.VarProp("CPland_relative", "",  "normalized land CP burial ratio"),
+        PB.VarPropScalar("CPland_relative", "",  "normalized land CP burial ratio"),
     ]
 
     PB.add_method_do!(
