@@ -557,12 +557,13 @@ function PB.register_methods!(rj::ReactionLandWeatheringFluxes)
         ]
     )
 
+    # Ziheng added 20250514 after shield-2019
     if rj.pars.f_gypweather[] == "extra_pulse"
-        push!(vars_dep, ("(global.gyppulse)",     "",    "extra gypsum input"),)
+        push!(vars_dep, PB.VarDepScalar("(global.gyppulse)",     "",    "extra gypsum input"))
     end
 
     if rj.pars.f_pyrweather[] == "extra_pulse"
-        push!(vars_dep, ("(global.pyrpulse)",     "",    "extra pyrite input"),)
+        push!(vars_dep, PB.VarDepScalar("(global.pyrpulse)",     "",    "extra pyrite input"))
     end
 
     # Properties we calculate in do_react
