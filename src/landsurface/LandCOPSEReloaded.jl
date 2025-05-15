@@ -469,12 +469,12 @@ Base.@kwdef mutable struct ReactionLandWeatheringFluxes{P} <: PB.AbstractReactio
         PB.ParBool("enableS",          true,
             description="enable S weathering"),
         PB.ParString("f_pyrweather",    "copse_O2",
-            allowed_values=["copse_O2", "copse_noO2", "forced"],
+            allowed_values=["copse_O2", "copse_noO2", "forced", "extra_pulse"],
             description="functional form of dependence of pyrite weathering"),
         PB.ParDouble("k21_pyrw",       0.53e12,    units="mol S/yr",
             description="pyrite weathering"),
         PB.ParString("f_gypweather",    "original",
-            allowed_values=["original", "alternative", "forced"],
+            allowed_values=["original", "alternative", "forced", "extra_pulse"],
             description="functional form of dependence of gypsum weathering"),
         PB.ParDouble("k22_gypw",       1e12,       units="mol S/yr",
             description="gypsum weathering"),
@@ -556,6 +556,14 @@ function PB.register_methods!(rj::ReactionLandWeatheringFluxes)
             ("(sedcrust.PYR_delta)",      "per mil",    "Sedimentary pyrite d34S")
         ]
     )
+
+    if rj.pars.f_gypweather[] == "extra_pulse"
+        push!(vars_dep, ("(global.gyppulse)",     "",    "extra gypsum input"),)
+    end
+
+    if rj.pars.f_pyrweather[] == "extra_pulse"
+        push!(vars_dep, ("(global.pyrpulse)",     "",    "extra pyrite input"),)
+    end
 
     # Properties we calculate in do_react
     vars_prop = PB.VarVector(PB.VarPropScalar,
@@ -737,6 +745,8 @@ function do_land_weathering_fluxes(
             D.gypw[] = pars.k22_gypw[]*D.GYP_norm[]*D.UPLIFT[]*D.PG[]*D.RHO[]*D.f_carb[]
         elseif pars.f_gypweather[] == "forced" # dependent on evaporite area
             D.gypw[] = pars.k22_gypw[]*D.GYP_norm[]*D.EVAP_AREA[]*D.UPLIFT[]*D.PG[]*D.RHO[]*D.f_carb[]
+        elseif pars.f_gypweather[] == "extra_pulse" # forced by extra gypsum input
+            D.gypw[] = pars.k22_gypw[]*D.GYP_norm[]*D.UPLIFT[]*D.PG[]*D.RHO[]*D.f_carb[] + pars.k22_gypw[]*D.gyppulse[]
         else
             error("unknown f_gypweather ", pars.f_gypweather[])
         end
@@ -750,6 +760,8 @@ function do_land_weathering_fluxes(
             D.pyrw[] = pars.k21_pyrw[]*D.UPLIFT[]*D.PYR_norm[]
         elseif pars.f_pyrweather[] == "forced" # forced by exposed shale area
             D.pyrw[] = pars.k21_pyrw[]*D.UPLIFT[]*D.SHALE_AREA[]*D.PYR_norm[]
+        elseif pars.f_pyrweather[] == "extra_pulse" # forced by extra pyrite input
+            D.pyrw[] = pars.k21_pyrw[]*D.UPLIFT[]*D.PYR_norm[] + pars.k21_pyrw[]*D.pyrpulse[]
         else
             error("unknown f_pyrweather ", pars.f_pyrweather[])
         end
